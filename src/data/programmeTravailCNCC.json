@@ -1,0 +1,117 @@
+[
+  {
+    "Phase": "P1: Acceptation et Planification Initiale",
+    "Tâche": "Acquisition de la connaissance de l'entité et de son environnement (secteur, modèle économique, risques).",
+    "Exigence(s) Réglementaire(s)": "NEP 315 [1]",
+    "Documentation Utilisateur": "Synthèse de la connaissance acquise et du modèle d'affaires."
+  },
+  {
+    "Phase": "P1: Acceptation et Planification Initiale",
+    "Tâche": "Examen et, si pertinent, documentation des risques liés au numérique (IT) dans l'environnement de l'entité.",
+    "Exigence(s) Réglementaire(s)": "Règles de l'art / CNCC [2]",
+    "Documentation Utilisateur": "Questionnaire sur l'ouverture numérique et l'exposition aux risques IT."
+  },
+  {
+    "Phase": "P1: Acceptation et Planification Initiale",
+    "Tâche": "Formalisation du Plan de Mission et du Programme de Travail général.",
+    "Exigence(s) Réglementaire(s)": "NEP 230 & NEP 300 [3, 4]",
+    "Documentation Utilisateur": "Plan de mission validé, incluant l'étendue et le calendrier général."
+  },
+  {
+    "Phase": "P2: Détermination des Seuils et Évaluation des Risques",
+    "Tâche": "Détermination du Seuil de Signification (global) et des seuils spécifiques si nécessaire.",
+    "Exigence(s) Réglementaire(s)": "NEP 320 [5]",
+    "Documentation Utilisateur": "Calcul détaillé des seuils (base de calcul et pourcentage appliqué)."
+  },
+  {
+    "Phase": "P2: Détermination des Seuils et Évaluation des Risques",
+    "Tâche": "Détermination du Seuil de Planification à utiliser pour définir la nature et l'étendue des procédures.",
+    "Exigence(s) Réglementaire(s)": "NEP 320 [5]",
+    "Documentation Utilisateur": "Justification du pourcentage appliqué au seuil de signification pour obtenir le seuil de planification."
+  },
+  {
+    "Phase": "P2: Détermination des Seuils et Évaluation des Risques",
+    "Tâche": "Évaluation et documentation du risque d'anomalies significatives au niveau des assertions (exhaustivité, existence, évaluation, etc.).",
+    "Exigence(s) Réglementaire(s)": "NEP 315 [1]",
+    "Documentation Utilisateur": "Matrice d'évaluation des risques par cycle (compte/assertion)."
+  },
+  {
+    "Phase": "P3: Exécution des Procédures de Fond et Contrôles Clés",
+    "Tâche": "Définir et appliquer les procédures analytiques (comparaison, ratios) sur les principaux soldes de comptes et identifier les variations significatives.",
+    "Exigence(s) Réglementaire(s)": "NEP 315 [6]",
+    "Documentation Utilisateur": "Documentation des attentes, des résultats des procédures analytiques et analyse des écarts."
+  },
+  {
+    "Phase": "P3: Exécution des Procédures de Fond et Contrôles Clés",
+    "Tâche": "Définir et appliquer les tests de détail sur les cycles et soldes les plus risqués.",
+    "Exigence(s) Réglementaire(s)": "NEP 315 [6]",
+    "Documentation Utilisateur": "Étendue du test (chantillon), justification de la méthode et résultat de l'examen."
+  },
+  {
+    "Phase": "P3: Exécution des Procédures de Fond et Contrôles Clés",
+    "Tâche": "Enregistrement de la nature, du calendrier et de l'étendue des procédures d'audit effectuées.",
+    "Exigence(s) Réglementaire(s)": "NEP 230 [3]",
+    "Documentation Utilisateur": "Description des procédures menées et planning effectif."
+  },
+  {
+    "Phase": "P3: Exécution des Procédures de Fond et Contrôles Clés",
+    "Tâche": "Saisie et documentation des résultats de ces procédures et des éléments collectés (preuves/feuilles de travail).",
+    "Exigence(s) Réglementaire(s)": "NEP 230 [3]",
+    "Documentation Utilisateur": "Fichiers de preuves (pièces justificatives, confirmations) et conclusions sur les éléments testés."
+  },
+  {
+    "Phase": "P3: Exécution des Procédures de Fond et Contrôles Clés",
+    "Tâche": "Identification et documentation des caractéristiques des éléments testés (ex: numéros de factures, dates).",
+    "Exigence(s) Réglementaire(s)": "NEP 230 [3]",
+    "Documentation Utilisateur": "Détail des éléments retenus dans l'échantillon de test."
+  },
+  {
+    "Phase": "P4: Synthèse et Traitement des Anomalies",
+    "Tâche": "Documentation des problématiques concernant les éléments significatifs et des conclusions provisoires formulées.",
+    "Exigence(s) Réglementaire(s)": "NEP 230 [3]",
+    "Documentation Utilisateur": "Liste des ajustements proposés ou non corrigés (passage d'écritures)."
+  },
+  {
+    "Phase": "P4: Synthèse et Traitement des Anomalies",
+    "Tâche": "Formalisation des échanges intervenus avec la direction concernant les problématiques relevées.",
+    "Exigence(s) Réglementaire(s)": "NEP 230 [3]",
+    "Documentation Utilisateur": "Mémorandums des entretiens (date, sujet, interlocuteur, résumé des discussions)."
+  },
+  {
+    "Phase": "P4: Synthèse et Traitement des Anomalies",
+    "Tâche": "Documentation du traitement de toute information contradictoire ou incohérente identifiée au cours de l'audit.",
+    "Exigence(s) Réglementaire(s)": "NEP 230 [3]",
+    "Documentation Utilisateur": "Note de synthèse sur la résolution des incohérences ou l'impact résiduel."
+  },
+  {
+    "Phase": "P5: Finalisation, Revue et Documentation Finale",
+    "Tâche": "Mentionner l'identité et la date de réalisation des travaux pour chaque feuille de travail.",
+    "Exigence(s) Réglementaire(s)": "NEP 230 [3]",
+    "Documentation Utilisateur": "(Réalisé automatiquement par l'agent : initiales/date de l'utilisateur)."
+  },
+  {
+    "Phase": "P5: Finalisation, Revue et Documentation Finale",
+    "Tâche": "Effectuer et documenter la revue des travaux (identité du réviseur, date et étendue de la revue).",
+    "Exigence(s) Réglementaire(s)": "NEP 230 [3]",
+    "Documentation Utilisateur": "Note de revue signée par le responsable de mission/associé."
+  },
+  {
+    "Phase": "P5: Finalisation, Revue et Documentation Finale",
+    "Tâche": "Compléter la documentation relative à la continuité d'exploitation et aux événements postérieurs à la clôture.",
+    "Exigence(s) Réglementaire(s)": "NEP 700 [7]",
+    "Documentation Utilisateur": "Conclusion sur la continuité d'exploitation et revue des événements post-clôture."
+  },
+  {
+    "Phase": "P5: Finalisation, Revue et Documentation Finale",
+    "Tâche": "Préparation des éléments factuels qui serviront à la rédaction de la Justification des Appréciations dans le rapport.",
+    "Exigence(s) Réglementaire(s)": "NEP 700 [7, 8]",
+    "Documentation Utilisateur": "Liste des points d'audit les plus significatifs pour la JA."
+  },
+  {
+    "Phase": "P5: Finalisation, Revue et Documentation Finale",
+    "Tâche": "S'assurer de la complétude du dossier d'audit pour l'archivage légal de dix ans et de la conformité RGPD de la documentation.",
+    "Exigence(s) Réglementaire(s)": "NEP 230 [3] / RGPD [9, 10]",
+    "Documentation Utilisateur": "Validation de la clôture et du verrouillage définitif du dossier d'audit."
+  }
+]
+

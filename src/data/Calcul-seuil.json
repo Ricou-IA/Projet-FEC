@@ -1,0 +1,97 @@
+{
+  "materiality_calculation_framework": {
+    "version": "1.0",
+    "description": "Méthode de calcul du Seuil de Signification Global (SSG) et du Seuil de Remontée des Anomalies basée sur une table de tranches, en EUR.",
+    "base_figure_description": "Montant de référence (A) : Le montant le plus élevé entre le Chiffre d'Affaires HT et le Total Bilan.",
+    "materiality_bands": [
+      {
+        "min_base": 0,
+        "max_base": 500000,
+        "fixed_amount_a": 1500,
+        "percentage_b": 0.0180
+      },
+      {
+        "min_base": 500001,
+        "max_base": 1000000,
+        "fixed_amount_a": 3000,
+        "percentage_b": 0.0150
+      },
+      {
+        "min_base": 1000001,
+        "max_base": 2000000,
+        "fixed_amount_a": 5500,
+        "percentage_b": 0.0125
+      },
+      {
+        "min_base": 2000001,
+        "max_base": 5000000,
+        "fixed_amount_a": 7500,
+        "percentage_b": 0.0115
+      },
+      {
+        "min_base": 5000001,
+        "max_base": 10000000,
+        "fixed_amount_a": 15000,
+        "percentage_b": 0.0100
+      },
+      {
+        "min_base": 10000001,
+        "max_base": 20000000,
+        "fixed_amount_a": 25000,
+        "percentage_b": 0.0090
+      },
+      {
+        "min_base": 20000001,
+        "max_base": 75000000,
+        "fixed_amount_a": 35000,
+        "percentage_b": 0.0085
+      },
+      {
+        "min_base": 75000001,
+        "max_base": 100000000,
+        "fixed_amount_a": 105000,
+        "percentage_b": 0.0080
+      },
+      {
+        "min_base": 100000001,
+        "max_base": 150000000,
+        "fixed_amount_a": 205000,
+        "percentage_b": 0.0070
+      },
+      {
+        "min_base": 150000001,
+        "max_base": 200000000,
+        "fixed_amount_a": 355000,
+        "percentage_b": 0.0060
+      },
+      {
+        "min_base": 200000001,
+        "max_base": null, 
+        "fixed_amount_a": 555000,
+        "percentage_b": 0.0050
+      }
+    ],
+    "calculation_steps": {
+      "step_a_input": "Base de Référence (Max CA ou Bilan)",
+      "step_b_input": "Pourcentage (colonne 'b' de la tranche correspondante)",
+      "step_c_calculation": {
+        "label": "Calcul C (Base * Pourcentage)",
+        "formula": "A * B"
+      },
+      "step_d_input": "Montant Fixe (colonne 'a' de la tranche correspondante)",
+      "step_e_calculation": {
+        "label": "Seuil de Signification non arrondi (SSG)",
+        "formula": "C + D"
+      },
+      "step_f_output_ss": {
+        "label": "Seuil de Signification (arrondi)",
+        "formula": "Arrondi du résultat E"
+      }
+    },
+    "anomaly_reporting_threshold": {
+      "label": "Seuil de remontée des ajustements",
+      "rule": "Ne peut être > 3% du Seuil de Signification (F)",
+      "percentage_of_ssg": 0.03
+    }
+  }
+}

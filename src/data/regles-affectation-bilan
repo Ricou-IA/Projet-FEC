@@ -1,0 +1,577 @@
+{
+  "version": "5.0-PCG2025-BILAN",
+  "description": "Règles d'affectation et libellés PCG 2025 - Bilan",
+  "dateCreation": "2025-01-19",
+  
+  "libellesComptes": {
+    "classe1": {
+      "10": {"libelle": "Capital et réserves", "categorie": "capitauxPropres", "position": "passif"},
+      "101": {"libelle": "Capital", "categorie": "capitauxPropres", "position": "passif", "parent": "10"},
+      "104": {"libelle": "Primes liées au capital social", "categorie": "capitauxPropres", "position": "passif", "parent": "10"},
+      "105": {"libelle": "Écarts de réévaluation", "categorie": "capitauxPropres", "position": "passif", "parent": "10"},
+      "106": {"libelle": "Réserves", "categorie": "capitauxPropres", "position": "passif", "parent": "10"},
+      "108": {"libelle": "Compte de l'exploitant", "categorie": "capitauxPropres", "position": "passif", "parent": "10"},
+      "109": {"libelle": "Actionnaires : Capital souscrit - non appelé", "categorie": "capitauxPropres", "position": "actif", "parent": "10", "note": "Compte correcteur - Diminue les capitaux propres à l'actif"},
+      
+      "11": {"libelle": "Report à nouveau", "categorie": "capitauxPropres", "position": "passif"},
+      "110": {"libelle": "Report à nouveau (solde créditeur)", "categorie": "capitauxPropres", "position": "passif", "parent": "11"},
+      "119": {"libelle": "Report à nouveau (solde débiteur)", "categorie": "capitauxPropres", "position": "passif", "parent": "11", "note": "Solde débiteur - Diminue les capitaux propres"},
+      
+      "12": {"libelle": "Résultat de l'exercice (bénéfice ou perte)", "categorie": "capitauxPropres", "position": "passif"},
+      "120": {"libelle": "Résultat de l'exercice (bénéfice)", "categorie": "capitauxPropres", "position": "passif", "parent": "12"},
+      "129": {"libelle": "Résultat de l'exercice (perte)", "categorie": "capitauxPropres", "position": "passif", "parent": "12", "note": "Perte - Diminue les capitaux propres"},
+      
+      "13": {"libelle": "Subventions d'investissement", "categorie": "capitauxPropres", "position": "passif"},
+      "131": {"libelle": "Subventions d'équipement", "categorie": "capitauxPropres", "position": "passif", "parent": "13"},
+      "138": {"libelle": "Autres subventions d'investissement", "categorie": "capitauxPropres", "position": "passif", "parent": "13"},
+      "139": {"libelle": "Subventions d'investissement inscrites au compte de résultat", "categorie": "capitauxPropres", "position": "passif", "parent": "13", "note": "Compte correcteur - Diminue les subventions"},
+      
+      "14": {"libelle": "Provisions réglementées", "categorie": "capitauxPropres", "position": "passif"},
+      "142": {"libelle": "Provisions réglementées relatives aux immobilisations", "categorie": "capitauxPropres", "position": "passif", "parent": "14"},
+      "143": {"libelle": "Provisions réglementées relatives aux stocks", "categorie": "capitauxPropres", "position": "passif", "parent": "14"},
+      "144": {"libelle": "Provisions réglementées relatives aux autres éléments de l'actif", "categorie": "capitauxPropres", "position": "passif", "parent": "14"},
+      "145": {"libelle": "Amortissements dérogatoires", "categorie": "capitauxPropres", "position": "passif", "parent": "14"},
+      "146": {"libelle": "Provision spéciale de réévaluation", "categorie": "capitauxPropres", "position": "passif", "parent": "14"},
+      "148": {"libelle": "Autres provisions réglementées", "categorie": "capitauxPropres", "position": "passif", "parent": "14"},
+      
+      "15": {"libelle": "Provisions pour risques et charges", "categorie": "provisions", "position": "passif"},
+      "151": {"libelle": "Provisions pour risques", "categorie": "provisions", "position": "passif", "parent": "15"},
+      "153": {"libelle": "Provisions pour pensions et obligations similaires", "categorie": "provisions", "position": "passif", "parent": "15"},
+      "154": {"libelle": "Provisions pour restructurations", "categorie": "provisions", "position": "passif", "parent": "15"},
+      "155": {"libelle": "Provisions pour impôts", "categorie": "provisions", "position": "passif", "parent": "15"},
+      "156": {"libelle": "Provisions pour renouvellement des immobilisations", "categorie": "provisions", "position": "passif", "parent": "15"},
+      "157": {"libelle": "Provisions pour charges à répartir sur plusieurs exercices", "categorie": "provisions", "position": "passif", "parent": "15"},
+      "158": {"libelle": "Autres provisions pour charges", "categorie": "provisions", "position": "passif", "parent": "15"},
+      
+      "16": {"libelle": "Emprunts et dettes assimilées", "categorie": "dettes", "position": "passif"},
+      "161": {"libelle": "Emprunts obligataires convertibles", "categorie": "dettes", "position": "passif", "parent": "16"},
+      "163": {"libelle": "Autres emprunts obligataires", "categorie": "dettes", "position": "passif", "parent": "16"},
+      "164": {"libelle": "Emprunts auprès des établissements de crédit", "categorie": "dettes", "position": "passif", "parent": "16"},
+      "165": {"libelle": "Dépôts et cautionnements reçus", "categorie": "dettes", "position": "passif", "parent": "16"},
+      "166": {"libelle": "Participation des salariés aux résultats", "categorie": "dettes", "position": "passif", "parent": "16"},
+      "167": {"libelle": "Emprunts et dettes assortis de conditions particulières", "categorie": "dettes", "position": "passif", "parent": "16"},
+      "168": {"libelle": "Autres emprunts et dettes assimilées", "categorie": "dettes", "position": "passif", "parent": "16"},
+      "169": {"libelle": "Primes de remboursement des obligations", "categorie": "dettes", "position": "actif", "parent": "16", "note": "Compte correcteur - Charge à étaler à l'actif"},
+      
+      "17": {"libelle": "Dettes rattachées à des participations", "categorie": "dettes", "position": "passif"},
+      "171": {"libelle": "Dettes rattachées à des participations (groupe)", "categorie": "dettes", "position": "passif", "parent": "17"},
+      "174": {"libelle": "Dettes rattachées à des participations (hors groupe)", "categorie": "dettes", "position": "passif", "parent": "17"},
+      "178": {"libelle": "Dettes rattachées à des sociétés en participation", "categorie": "dettes", "position": "passif", "parent": "17"},
+      
+      "18": {"libelle": "Comptes de liaison des établissements et sociétés en participation", "categorie": "liaison", "position": "mixte"},
+      "181": {"libelle": "Comptes de liaison des établissements", "categorie": "liaison", "position": "mixte", "parent": "18", "note": "Peut être actif ou passif selon le solde"},
+      "186": {"libelle": "Biens et prestations de services échangés entre établissements", "categorie": "liaison", "position": "mixte", "parent": "18"},
+      "188": {"libelle": "Comptes de liaison des sociétés en participation", "categorie": "liaison", "position": "mixte", "parent": "18"}
+    },
+    
+    "classe2": {
+      "20": {"libelle": "Immobilisations incorporelles", "categorie": "immobilisationsIncorporelles", "position": "actif"},
+      "201": {"libelle": "Frais d'établissement", "categorie": "immobilisationsIncorporelles", "position": "actif", "parent": "20"},
+      "203": {"libelle": "Frais de recherche et de développement", "categorie": "immobilisationsIncorporelles", "position": "actif", "parent": "20"},
+      "205": {"libelle": "Concessions et droits similaires, brevets, licences, marques", "categorie": "immobilisationsIncorporelles", "position": "actif", "parent": "20"},
+      "206": {"libelle": "Droit au bail", "categorie": "immobilisationsIncorporelles", "position": "actif", "parent": "20"},
+      "207": {"libelle": "Fonds commercial", "categorie": "immobilisationsIncorporelles", "position": "actif", "parent": "20"},
+      "208": {"libelle": "Autres immobilisations incorporelles", "categorie": "immobilisationsIncorporelles", "position": "actif", "parent": "20"},
+      
+      "21": {"libelle": "Immobilisations corporelles", "categorie": "immobilisationsCorporelles", "position": "actif"},
+      "211": {"libelle": "Terrains", "categorie": "immobilisationsCorporelles", "position": "actif", "parent": "21"},
+      "212": {"libelle": "Agencements et aménagements de terrains", "categorie": "immobilisationsCorporelles", "position": "actif", "parent": "21"},
+      "213": {"libelle": "Constructions", "categorie": "immobilisationsCorporelles", "position": "actif", "parent": "21"},
+      "214": {"libelle": "Constructions sur sol d'autrui", "categorie": "immobilisationsCorporelles", "position": "actif", "parent": "21"},
+      "215": {"libelle": "Installations techniques, matériel et outillage industriels", "categorie": "immobilisationsCorporelles", "position": "actif", "parent": "21"},
+      "218": {"libelle": "Autres immobilisations corporelles", "categorie": "immobilisationsCorporelles", "position": "actif", "parent": "21"},
+      
+      "22": {"libelle": "Immobilisations mises en concession", "categorie": "immobilisationsCorporelles", "position": "actif"},
+      "221": {"libelle": "Terrains en concession", "categorie": "immobilisationsCorporelles", "position": "actif", "parent": "22"},
+      "222": {"libelle": "Agencements et aménagements de terrains en concession", "categorie": "immobilisationsCorporelles", "position": "actif", "parent": "22"},
+      "223": {"libelle": "Constructions en concession", "categorie": "immobilisationsCorporelles", "position": "actif", "parent": "22"},
+      "224": {"libelle": "Installations techniques en concession", "categorie": "immobilisationsCorporelles", "position": "actif", "parent": "22"},
+      "228": {"libelle": "Autres immobilisations corporelles en concession", "categorie": "immobilisationsCorporelles", "position": "actif", "parent": "22"},
+      
+      "23": {"libelle": "Immobilisations en cours", "categorie": "immobilisationsEnCours", "position": "actif"},
+      "231": {"libelle": "Immobilisations incorporelles en cours", "categorie": "immobilisationsEnCours", "position": "actif", "parent": "23"},
+      "232": {"libelle": "Immobilisations corporelles en cours", "categorie": "immobilisationsEnCours", "position": "actif", "parent": "23"},
+      "237": {"libelle": "Avances et acomptes versés sur immobilisations incorporelles", "categorie": "immobilisationsEnCours", "position": "actif", "parent": "23"},
+      "238": {"libelle": "Avances et acomptes versés sur commandes d'immobilisations corporelles", "categorie": "immobilisationsEnCours", "position": "actif", "parent": "23"},
+      
+      "26": {"libelle": "Participations et créances rattachées à des participations", "categorie": "immobilisationsFinancieres", "position": "actif"},
+      "261": {"libelle": "Titres de participation", "categorie": "immobilisationsFinancieres", "position": "actif", "parent": "26"},
+      "266": {"libelle": "Autres formes de participation", "categorie": "immobilisationsFinancieres", "position": "actif", "parent": "26"},
+      "267": {"libelle": "Créances rattachées à des participations (groupe)", "categorie": "immobilisationsFinancieres", "position": "actif", "parent": "26"},
+      "268": {"libelle": "Créances rattachées à des participations (hors groupe)", "categorie": "immobilisationsFinancieres", "position": "actif", "parent": "26"},
+      "269": {"libelle": "Versements restant à effectuer sur titres de participation non libérés", "categorie": "immobilisationsFinancieres", "position": "passif", "parent": "26", "note": "Compte correcteur"},
+      
+      "27": {"libelle": "Autres immobilisations financières", "categorie": "immobilisationsFinancieres", "position": "actif"},
+      "271": {"libelle": "Titres immobilisés autres que les titres immobilisés de l'activité de portefeuille (droit de propriété)", "categorie": "immobilisationsFinancieres", "position": "actif", "parent": "27"},
+      "272": {"libelle": "Titres immobilisés (droit de créance)", "categorie": "immobilisationsFinancieres", "position": "actif", "parent": "27"},
+      "273": {"libelle": "Titres immobilisés de l'activité de portefeuille", "categorie": "immobilisationsFinancieres", "position": "actif", "parent": "27"},
+      "274": {"libelle": "Prêts", "categorie": "immobilisationsFinancieres", "position": "actif", "parent": "27"},
+      "275": {"libelle": "Dépôts et cautionnements versés", "categorie": "immobilisationsFinancieres", "position": "actif", "parent": "27"},
+      "276": {"libelle": "Autres créances immobilisées", "categorie": "immobilisationsFinancieres", "position": "actif", "parent": "27"},
+      "277": {"libelle": "Actions propres ou parts propres", "categorie": "immobilisationsFinancieres", "position": "actif", "parent": "27"},
+      "279": {"libelle": "Versements restant à effectuer sur titres immobilisés non libérés", "categorie": "immobilisationsFinancieres", "position": "passif", "parent": "27", "note": "Compte correcteur"},
+      
+      "28": {"libelle": "Amortissements des immobilisations", "categorie": "amortissementsProvisions", "position": "actif", "nature": "correcteur"},
+      "280": {"libelle": "Amortissements des immobilisations incorporelles", "categorie": "amortissementsProvisions", "position": "actif", "parent": "28", "nature": "correcteur"},
+      "281": {"libelle": "Amortissements des immobilisations corporelles", "categorie": "amortissementsProvisions", "position": "actif", "parent": "28", "nature": "correcteur"},
+      "282": {"libelle": "Amortissements des immobilisations mises en concession", "categorie": "amortissementsProvisions", "position": "actif", "parent": "28", "nature": "correcteur"},
+      
+      "29": {"libelle": "Dépréciations des immobilisations", "categorie": "amortissementsProvisions", "position": "actif", "nature": "correcteur"},
+      "290": {"libelle": "Dépréciations des immobilisations incorporelles", "categorie": "amortissementsProvisions", "position": "actif", "parent": "29", "nature": "correcteur"},
+      "291": {"libelle": "Dépréciations des immobilisations corporelles", "categorie": "amortissementsProvisions", "position": "actif", "parent": "29", "nature": "correcteur"},
+      "292": {"libelle": "Dépréciations des immobilisations mises en concession", "categorie": "amortissementsProvisions", "position": "actif", "parent": "29", "nature": "correcteur"},
+      "293": {"libelle": "Dépréciations des immobilisations en cours", "categorie": "amortissementsProvisions", "position": "actif", "parent": "29", "nature": "correcteur"},
+      "296": {"libelle": "Dépréciations des participations et créances rattachées", "categorie": "amortissementsProvisions", "position": "actif", "parent": "29", "nature": "correcteur"},
+      "297": {"libelle": "Dépréciations des autres immobilisations financières", "categorie": "amortissementsProvisions", "position": "actif", "parent": "29", "nature": "correcteur"}
+    },
+    
+    "classe3": {
+      "31": {"libelle": "Matières premières et fournitures", "categorie": "stocks", "position": "actif"},
+      "311": {"libelle": "Matières premières", "categorie": "stocks", "position": "actif", "parent": "31"},
+      "312": {"libelle": "Matières et fournitures consommables", "categorie": "stocks", "position": "actif", "parent": "31"},
+      "317": {"libelle": "Fournitures stockées", "categorie": "stocks", "position": "actif", "parent": "31"},
+      
+      "32": {"libelle": "Autres approvisionnements", "categorie": "stocks", "position": "actif"},
+      "321": {"libelle": "Matières consommables", "categorie": "stocks", "position": "actif", "parent": "32"},
+      "322": {"libelle": "Fournitures consommables", "categorie": "stocks", "position": "actif", "parent": "32"},
+      "326": {"libelle": "Emballages", "categorie": "stocks", "position": "actif", "parent": "32"},
+      
+      "33": {"libelle": "En-cours de production de biens", "categorie": "stocks", "position": "actif"},
+      "331": {"libelle": "Produits en cours", "categorie": "stocks", "position": "actif", "parent": "33"},
+      "335": {"libelle": "Travaux en cours", "categorie": "stocks", "position": "actif", "parent": "33"},
+      
+      "34": {"libelle": "En-cours de production de services", "categorie": "stocks", "position": "actif"},
+      "341": {"libelle": "Études en cours", "categorie": "stocks", "position": "actif", "parent": "34"},
+      "345": {"libelle": "Prestations de services en cours", "categorie": "stocks", "position": "actif", "parent": "34"},
+      
+      "35": {"libelle": "Stocks de produits", "categorie": "stocks", "position": "actif"},
+      "351": {"libelle": "Produits intermédiaires", "categorie": "stocks", "position": "actif", "parent": "35"},
+      "355": {"libelle": "Produits finis", "categorie": "stocks", "position": "actif", "parent": "35"},
+      "358": {"libelle": "Produits résiduels ou matières de récupération", "categorie": "stocks", "position": "actif", "parent": "35"},
+      
+      "37": {"libelle": "Stocks de marchandises", "categorie": "stocks", "position": "actif"},
+      "371": {"libelle": "Marchandises A", "categorie": "stocks", "position": "actif", "parent": "37"},
+      "377": {"libelle": "Marchandises diverses", "categorie": "stocks", "position": "actif", "parent": "37"},
+      
+      "39": {"libelle": "Dépréciations des stocks et en-cours", "categorie": "amortissementsProvisions", "position": "actif", "nature": "correcteur"},
+      "391": {"libelle": "Dépréciations des matières premières et fournitures", "categorie": "amortissementsProvisions", "position": "actif", "parent": "39", "nature": "correcteur"},
+      "392": {"libelle": "Dépréciations des autres approvisionnements", "categorie": "amortissementsProvisions", "position": "actif", "parent": "39", "nature": "correcteur"},
+      "393": {"libelle": "Dépréciations des en-cours de production de biens", "categorie": "amortissementsProvisions", "position": "actif", "parent": "39", "nature": "correcteur"},
+      "394": {"libelle": "Dépréciations des en-cours de production de services", "categorie": "amortissementsProvisions", "position": "actif", "parent": "39", "nature": "correcteur"},
+      "395": {"libelle": "Dépréciations des stocks de produits", "categorie": "amortissementsProvisions", "position": "actif", "parent": "39", "nature": "correcteur"},
+      "397": {"libelle": "Dépréciations des stocks de marchandises", "categorie": "amortissementsProvisions", "position": "actif", "parent": "39", "nature": "correcteur"}
+    },
+    
+    "classe4": {
+      "40": {"libelle": "Fournisseurs et comptes rattachés", "categorie": "dettes", "position": "passif"},
+      "401": {"libelle": "Fournisseurs", "categorie": "dettes", "position": "passif", "parent": "40"},
+      "403": {"libelle": "Fournisseurs - Effets à payer", "categorie": "dettes", "position": "passif", "parent": "40"},
+      "404": {"libelle": "Fournisseurs d'immobilisations", "categorie": "dettes", "position": "passif", "parent": "40"},
+      "405": {"libelle": "Fournisseurs d'immobilisations - Effets à payer", "categorie": "dettes", "position": "passif", "parent": "40"},
+      "408": {"libelle": "Fournisseurs - Factures non parvenues", "categorie": "dettes", "position": "passif", "parent": "40"},
+      "409": {"libelle": "Fournisseurs débiteurs", "categorie": "creances", "position": "actif", "parent": "40", "note": "Avances et acomptes versés"},
+      
+      "41": {"libelle": "Clients et comptes rattachés", "categorie": "creances", "position": "actif"},
+      "411": {"libelle": "Clients", "categorie": "creances", "position": "actif", "parent": "41"},
+      "413": {"libelle": "Clients - Effets à recevoir", "categorie": "creances", "position": "actif", "parent": "41"},
+      "416": {"libelle": "Clients douteux ou litigieux", "categorie": "creances", "position": "actif", "parent": "41"},
+      "418": {"libelle": "Clients - Produits non encore facturés", "categorie": "creances", "position": "actif", "parent": "41"},
+      "419": {"libelle": "Clients créditeurs", "categorie": "dettes", "position": "passif", "parent": "41", "note": "Avances et acomptes reçus"},
+      
+      "42": {"libelle": "Personnel et comptes rattachés", "categorie": "mixte", "position": "mixte"},
+      "421": {"libelle": "Personnel - Rémunérations dues", "categorie": "dettes", "position": "passif", "parent": "42"},
+      "422": {"libelle": "Comités d'entreprise, d'établissement", "categorie": "dettes", "position": "passif", "parent": "42"},
+      "424": {"libelle": "Participation des salariés aux résultats", "categorie": "dettes", "position": "passif", "parent": "42"},
+      "425": {"libelle": "Personnel - Avances et acomptes", "categorie": "creances", "position": "actif", "parent": "42"},
+      "426": {"libelle": "Personnel - Dépôts", "categorie": "dettes", "position": "passif", "parent": "42"},
+      "427": {"libelle": "Personnel - Oppositions", "categorie": "dettes", "position": "passif", "parent": "42"},
+      "428": {"libelle": "Personnel - Charges à payer et produits à recevoir", "categorie": "mixte", "position": "mixte", "parent": "42"},
+      
+      "43": {"libelle": "Sécurité sociale et autres organismes sociaux", "categorie": "dettes", "position": "passif"},
+      "431": {"libelle": "Sécurité sociale", "categorie": "dettes", "position": "passif", "parent": "43"},
+      "437": {"libelle": "Autres organismes sociaux", "categorie": "dettes", "position": "passif", "parent": "43"},
+      "438": {"libelle": "Organismes sociaux - Charges à payer et produits à recevoir", "categorie": "mixte", "position": "mixte", "parent": "43"},
+      
+      "44": {"libelle": "État et autres collectivités publiques", "categorie": "mixte", "position": "mixte"},
+      "441": {"libelle": "État - Subventions à recevoir", "categorie": "creances", "position": "actif", "parent": "44"},
+      "442": {"libelle": "État - Impôts et taxes recouvrables sur des tiers", "categorie": "creances", "position": "actif", "parent": "44"},
+      "443": {"libelle": "Opérations particulières avec l'État", "categorie": "mixte", "position": "mixte", "parent": "44"},
+      "444": {"libelle": "État - Impôts sur les bénéfices", "categorie": "mixte", "position": "mixte", "parent": "44"},
+      "445": {"libelle": "État - Taxes sur le chiffre d'affaires", "categorie": "mixte", "position": "mixte", "parent": "44"},
+      "446": {"libelle": "Obligations cautionnées", "categorie": "dettes", "position": "passif", "parent": "44"},
+      "447": {"libelle": "Autres impôts, taxes et versements assimilés", "categorie": "dettes", "position": "passif", "parent": "44"},
+      "448": {"libelle": "État - Charges à payer et produits à recevoir", "categorie": "mixte", "position": "mixte", "parent": "44"},
+      
+      "45": {"libelle": "Groupe et associés", "categorie": "mixte", "position": "mixte"},
+      "451": {"libelle": "Groupe", "categorie": "mixte", "position": "mixte", "parent": "45"},
+      "455": {"libelle": "Associés - Comptes courants", "categorie": "mixte", "position": "mixte", "parent": "45"},
+      "456": {"libelle": "Associés - Opérations sur le capital", "categorie": "mixte", "position": "mixte", "parent": "45"},
+      "457": {"libelle": "Associés - Dividendes à payer", "categorie": "dettes", "position": "passif", "parent": "45"},
+      "458": {"libelle": "Associés - Opérations faites en commun et en GIE", "categorie": "mixte", "position": "mixte", "parent": "45"},
+      
+      "46": {"libelle": "Débiteurs divers et créditeurs divers", "categorie": "mixte", "position": "mixte"},
+      "462": {"libelle": "Créances sur cessions d'immobilisations", "categorie": "creances", "position": "actif", "parent": "46"},
+      "464": {"libelle": "Dettes sur acquisitions de valeurs mobilières de placement", "categorie": "dettes", "position": "passif", "parent": "46"},
+      "465": {"libelle": "Créances sur cessions de valeurs mobilières de placement", "categorie": "creances", "position": "actif", "parent": "46"},
+      "467": {"libelle": "Autres comptes débiteurs ou créditeurs", "categorie": "mixte", "position": "mixte", "parent": "46"},
+      "468": {"libelle": "Divers - Charges à payer et produits à recevoir", "categorie": "mixte", "position": "mixte", "parent": "46"},
+      
+      "47": {"libelle": "Comptes transitoires ou d'attente", "categorie": "mixte", "position": "mixte"},
+      "471": {"libelle": "Comptes d'attente", "categorie": "mixte", "position": "mixte", "parent": "47"},
+      "472": {"libelle": "Versements restant à effectuer sur titres non libérés", "categorie": "dettes", "position": "passif", "parent": "47"},
+      "476": {"libelle": "Différence de conversion - Actif", "categorie": "creances", "position": "actif", "parent": "47"},
+      "477": {"libelle": "Différence de conversion - Passif", "categorie": "dettes", "position": "passif", "parent": "47"},
+      "478": {"libelle": "Autres comptes transitoires", "categorie": "mixte", "position": "mixte", "parent": "47"},
+      
+      "48": {"libelle": "Comptes de régularisation", "categorie": "mixte", "position": "mixte"},
+      "481": {"libelle": "Charges à répartir sur plusieurs exercices", "categorie": "creances", "position": "actif", "parent": "48"},
+      "486": {"libelle": "Charges constatées d'avance", "categorie": "creances", "position": "actif", "parent": "48"},
+      "487": {"libelle": "Produits constatés d'avance", "categorie": "dettes", "position": "passif", "parent": "48"},
+      "488": {"libelle": "Comptes de répartition périodique des charges et des produits", "categorie": "mixte", "position": "mixte", "parent": "48"},
+      "489": {"libelle": "Quotas d'émission alloués par l'État", "categorie": "mixte", "position": "mixte", "parent": "48"},
+      
+      "49": {"libelle": "Dépréciations des comptes de tiers", "categorie": "amortissementsProvisions", "position": "actif", "nature": "correcteur"},
+      "491": {"libelle": "Dépréciations des comptes de clients", "categorie": "amortissementsProvisions", "position": "actif", "parent": "49", "nature": "correcteur"},
+      "495": {"libelle": "Dépréciations des comptes du groupe et des associés", "categorie": "amortissementsProvisions", "position": "actif", "parent": "49", "nature": "correcteur"},
+      "496": {"libelle": "Dépréciations des comptes de débiteurs divers", "categorie": "amortissementsProvisions", "position": "actif", "parent": "49", "nature": "correcteur"}
+    },
+    
+    "classe5": {
+      "50": {"libelle": "Valeurs mobilières de placement", "categorie": "valeursPlacement", "position": "actif"},
+      "501": {"libelle": "Parts dans des entreprises liées", "categorie": "valeursPlacement", "position": "actif", "parent": "50"},
+      "502": {"libelle": "Actions propres", "categorie": "valeursPlacement", "position": "actif", "parent": "50"},
+      "503": {"libelle": "Actions", "categorie": "valeursPlacement", "position": "actif", "parent": "50"},
+      "504": {"libelle": "Autres titres conférant un droit de propriété", "categorie": "valeursPlacement", "position": "actif", "parent": "50"},
+      "505": {"libelle": "Obligations et bons émis par la société et rachetés par elle", "categorie": "valeursPlacement", "position": "actif", "parent": "50"},
+      "506": {"libelle": "Obligations", "categorie": "valeursPlacement", "position": "actif", "parent": "50"},
+      "507": {"libelle": "Bons du Trésor et bons de caisse à court terme", "categorie": "valeursPlacement", "position": "actif", "parent": "50"},
+      "508": {"libelle": "Autres valeurs mobilières de placement et autres créances assimilées", "categorie": "valeursPlacement", "position": "actif", "parent": "50"},
+      "509": {"libelle": "Versements restant à effectuer sur valeurs mobilières de placement non libérées", "categorie": "dettes", "position": "passif", "parent": "50", "note": "Compte correcteur"},
+      
+      "51": {"libelle": "Banques, établissements financiers et assimilés", "categorie": "disponibilites", "position": "actif"},
+      "511": {"libelle": "Valeurs à l'encaissement", "categorie": "disponibilites", "position": "actif", "parent": "51"},
+      "512": {"libelle": "Banques", "categorie": "disponibilites", "position": "actif", "parent": "51"},
+      "514": {"libelle": "Chèques postaux", "categorie": "disponibilites", "position": "actif", "parent": "51"},
+      "515": {"libelle": "Caisses du Trésor et des établissements publics", "categorie": "disponibilites", "position": "actif", "parent": "51"},
+      "517": {"libelle": "Autres organismes financiers", "categorie": "disponibilites", "position": "actif", "parent": "51"},
+      "518": {"libelle": "Intérêts courus", "categorie": "disponibilites", "position": "actif", "parent": "51"},
+      "519": {"libelle": "Concours bancaires courants", "categorie": "dettes", "position": "passif", "parent": "51", "note": "Découverts bancaires"},
+      
+      "53": {"libelle": "Caisse", "categorie": "disponibilites", "position": "actif"},
+      "531": {"libelle": "Caisse siège social", "categorie": "disponibilites", "position": "actif", "parent": "53"},
+      "532": {"libelle": "Caisse succursale (ou établissement) A", "categorie": "disponibilites", "position": "actif", "parent": "53"},
+      
+      "54": {"libelle": "Régies d'avances et accréditifs", "categorie": "disponibilites", "position": "actif"},
+      "541": {"libelle": "Régies d'avances", "categorie": "disponibilites", "position": "actif", "parent": "54"},
+      "542": {"libelle": "Accréditifs", "categorie": "disponibilites", "position": "actif", "parent": "54"},
+      
+      "58": {"libelle": "Virements internes", "categorie": "virement", "position": "mixte"},
+      "580": {"libelle": "Virements internes", "categorie": "virement", "position": "mixte", "parent": "58"},
+      
+      "59": {"libelle": "Dépréciations des comptes financiers", "categorie": "amortissementsProvisions", "position": "actif", "nature": "correcteur"},
+      "590": {"libelle": "Dépréciations des valeurs mobilières de placement", "categorie": "amortissementsProvisions", "position": "actif", "parent": "59", "nature": "correcteur"}
+    }
+  },
+  
+  "structureBilan": {
+    "actif": {
+      "actifImmobilise": {
+        "libelle": "ACTIF IMMOBILISÉ",
+        "ordre": 1,
+        "sousCategories": {
+          "immobilisationsIncorporelles": {
+            "libelle": "Immobilisations incorporelles",
+            "ordre": 1,
+            "comptes": ["20"],
+            "amortissements": ["280"],
+            "depreciations": ["290"],
+            "presentation": "brut_amortissements_net"
+          },
+          "immobilisationsCorporelles": {
+            "libelle": "Immobilisations corporelles",
+            "ordre": 2,
+            "comptes": ["21", "22"],
+            "amortissements": ["281", "282"],
+            "depreciations": ["291", "292"],
+            "presentation": "brut_amortissements_net"
+          },
+          "immobilisationsEnCours": {
+            "libelle": "Immobilisations en cours",
+            "ordre": 3,
+            "comptes": ["23"],
+            "depreciations": ["293"],
+            "presentation": "brut_depreciations_net"
+          },
+          "immobilisationsFinancieres": {
+            "libelle": "Immobilisations financières",
+            "ordre": 4,
+            "comptes": ["26", "27"],
+            "comptesCorrecteurs": ["269", "279"],
+            "depreciations": ["296", "297"],
+            "presentation": "brut_depreciations_net"
+          },
+          "primesRemboursement": {
+            "libelle": "Primes de remboursement des obligations",
+            "ordre": 5,
+            "comptes": ["169"],
+            "presentation": "brut"
+          }
+        }
+      },
+      "actifCirculant": {
+        "libelle": "ACTIF CIRCULANT",
+        "ordre": 2,
+        "sousCategories": {
+          "stocks": {
+            "libelle": "Stocks et en-cours",
+            "ordre": 1,
+            "comptes": ["31", "32", "33", "34", "35", "37"],
+            "depreciations": ["391", "392", "393", "394", "395", "397"],
+            "presentation": "brut_depreciations_net"
+          },
+          "avancesAcomptes": {
+            "libelle": "Avances et acomptes versés sur commandes",
+            "ordre": 2,
+            "comptes": ["409"],
+            "presentation": "brut"
+          },
+          "creances": {
+            "libelle": "Créances",
+            "ordre": 3,
+            "sousCategories": {
+              "creancesExploitation": {
+                "libelle": "Créances clients et comptes rattachés",
+                "comptes": ["41"],
+                "depreciations": ["491"],
+                "presentation": "brut_depreciations_net"
+              },
+              "autresCreances": {
+                "libelle": "Autres créances",
+                "comptes": ["425", "441", "442", "443", "444", "445", "446", "447", "448", "451", "455", "456", "458", "462", "465", "467", "468"],
+                "depreciations": ["495", "496"],
+                "presentation": "brut_depreciations_net"
+              }
+            }
+          },
+          "valeursPlacement": {
+            "libelle": "Valeurs mobilières de placement",
+            "ordre": 4,
+            "comptes": ["50"],
+            "comptesCorrecteurs": ["509"],
+            "depreciations": ["590"],
+            "presentation": "brut_depreciations_net"
+          },
+          "disponibilites": {
+            "libelle": "Disponibilités",
+            "ordre": 5,
+            "comptes": ["51", "53", "54"],
+            "presentation": "brut"
+          }
+        }
+      },
+      "comptesRegularisation": {
+        "libelle": "Comptes de régularisation",
+        "ordre": 3,
+        "comptes": ["481", "486"],
+        "presentation": "brut"
+      },
+      "capitalNonAppele": {
+        "libelle": "Capital souscrit non appelé",
+        "ordre": 0,
+        "comptes": ["109"],
+        "presentation": "brut",
+        "note": "Si présent, affiché en premier à l'actif"
+      }
+    },
+    
+    "passif": {
+      "capitauxPropres": {
+        "libelle": "CAPITAUX PROPRES",
+        "ordre": 1,
+        "sousCategories": {
+          "capital": {
+            "libelle": "Capital",
+            "ordre": 1,
+            "comptes": ["101", "108"],
+            "note": "Capital social ou individuel"
+          },
+          "primes": {
+            "libelle": "Primes d'émission, de fusion, d'apport",
+            "ordre": 2,
+            "comptes": ["104"]
+          },
+          "ecartsReevaluation": {
+            "libelle": "Écarts de réévaluation",
+            "ordre": 3,
+            "comptes": ["105"]
+          },
+          "reserves": {
+            "libelle": "Réserves",
+            "ordre": 4,
+            "comptes": ["106"]
+          },
+          "reportNouveau": {
+            "libelle": "Report à nouveau",
+            "ordre": 5,
+            "comptes": ["11"],
+            "note": "110 (créditeur) ou 119 (débiteur avec signe -)"
+          },
+          "resultat": {
+            "libelle": "Résultat de l'exercice",
+            "ordre": 6,
+            "comptes": ["12"],
+            "note": "120 (bénéfice) ou 129 (perte avec signe -)"
+          },
+          "subventions": {
+            "libelle": "Subventions d'investissement",
+            "ordre": 7,
+            "comptes": ["13"],
+            "comptesCorrecteurs": ["139"]
+          },
+          "provisionsReglementees": {
+            "libelle": "Provisions réglementées",
+            "ordre": 8,
+            "comptes": ["14"]
+          }
+        },
+        "formule": "Total des capitaux propres = 10 + 11 + 12 + 13 + 14 - 109"
+      },
+      "provisions": {
+        "libelle": "PROVISIONS POUR RISQUES ET CHARGES",
+        "ordre": 2,
+        "comptes": ["15"],
+        "presentation": "detail_niveau3"
+      },
+      "dettes": {
+        "libelle": "DETTES",
+        "ordre": 3,
+        "sousCategories": {
+          "empruntsObligation": {
+            "libelle": "Emprunts obligataires convertibles",
+            "ordre": 1,
+            "comptes": ["161"]
+          },
+          "autresEmpruntsObligataires": {
+            "libelle": "Autres emprunts obligataires",
+            "ordre": 2,
+            "comptes": ["163"]
+          },
+          "empruntsEtablissementsCredit": {
+            "libelle": "Emprunts et dettes auprès des établissements de crédit",
+            "ordre": 3,
+            "comptes": ["164", "519"],
+            "note": "Dont concours bancaires courants (519)"
+          },
+          "empruntsFinanciersDivers": {
+            "libelle": "Emprunts et dettes financières divers",
+            "ordre": 4,
+            "comptes": ["165", "166", "167", "168"]
+          },
+          "avancesAcomptes": {
+            "libelle": "Avances et acomptes reçus sur commandes en cours",
+            "ordre": 5,
+            "comptes": ["419"]
+          },
+          "dettesFournisseurs": {
+            "libelle": "Dettes fournisseurs et comptes rattachés",
+            "ordre": 6,
+            "comptes": ["40"],
+            "exclusions": ["409"]
+          },
+          "dettesPersonnel": {
+            "libelle": "Dettes fiscales et sociales",
+            "ordre": 7,
+            "comptes": ["42", "43", "44"],
+            "note": "Personnel, organismes sociaux, État"
+          },
+          "dettesSurImmobilisations": {
+            "libelle": "Dettes sur immobilisations et comptes rattachés",
+            "ordre": 8,
+            "comptes": ["404", "405"]
+          },
+          "autresDettes": {
+            "libelle": "Autres dettes",
+            "ordre": 9,
+            "comptes": ["17", "45", "46", "47"],
+            "note": "Groupe, associés, divers"
+          },
+          "produitsConstatesAvance": {
+            "libelle": "Produits constatés d'avance",
+            "ordre": 10,
+            "comptes": ["487"]
+          }
+        }
+      },
+      "comptesRegularisation": {
+        "libelle": "Comptes de régularisation",
+        "ordre": 4,
+        "comptes": ["487"],
+        "note": "Produits constatés d'avance"
+      }
+    }
+  },
+  
+  "reglesAffichage": {
+    "nonCompensation": {
+      "principe": "Aucune compensation entre actif et passif n'est autorisée",
+      "regles": [
+        "Les comptes débiteurs vont à l'actif",
+        "Les comptes créditeurs vont au passif",
+        "Exception: comptes mixtes (classe 4) selon solde",
+        "Les comptes correcteurs (28, 29, 39, 49, 59) diminuent l'actif brut",
+        "Présentation en 3 colonnes: Brut / Amortissements et dépréciations / Net"
+      ]
+    },
+    "presentation": {
+      "colonnes": {
+        "actif": ["Brut", "Amortissements et dépréciations", "Net"],
+        "passif": ["Net"]
+      },
+      "ordre": {
+        "actif": "Du moins liquide au plus liquide (immobilisé puis circulant)",
+        "passif": "Par exigibilité croissante (capitaux propres puis dettes)"
+      }
+    },
+    "totalBilan": {
+      "principe": "Total actif = Total passif",
+      "formule": "Actif Net = Passif Total"
+    }
+  },
+  
+  "comptesSpecifiques": {
+    "comptesCorrecteurs": {
+      "description": "Comptes qui diminuent la valeur d'autres comptes",
+      "actif": {
+        "109": "Diminue le capital à l'actif",
+        "139": "Diminue les subventions d'investissement",
+        "169": "Charge à étaler - Augmente l'actif",
+        "269": "Diminue les participations",
+        "279": "Diminue les immobilisations financières",
+        "28x": "Amortissements - Diminuent les immobilisations",
+        "29x": "Dépréciations - Diminuent les immobilisations",
+        "39x": "Dépréciations - Diminuent les stocks",
+        "49x": "Dépréciations - Diminuent les créances",
+        "509": "Diminue les VMP",
+        "59x": "Dépréciations - Diminuent les VMP"
+      }
+    },
+    "comptesMixtes": {
+      "description": "Comptes pouvant être à l'actif ou au passif selon leur solde",
+      "regles": {
+        "classe4": "Analyser le solde de chaque compte individuellement",
+        "exemple": "411 débiteur = Actif, 419 créditeur = Passif"
+      },
+      "comptes": ["18", "42", "43", "44", "45", "46", "47", "48", "58"]
+    }
+  },
+  
+  "echeances": {
+    "description": "Distinction entre court terme et long terme",
+    "seuil": "12 mois",
+    "application": {
+      "creances": "Créances à + ou - d'un an",
+      "dettes": "Dettes à + ou - d'un an"
+    },
+    "presentation": "Information en annexe ou détail au bilan"
+  }
+}

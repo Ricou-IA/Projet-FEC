@@ -1,0 +1,277 @@
+{
+  "version": "5.0-PCG2025",
+  "description": "Règles d'affectation et libellés PCG 2025 - Architecture simplifiée",
+  "dateCreation": "2025-01-19",
+  
+  "libellesComptes": {
+    "classe6": {
+      "60": {"libelle": "Achats", "categorie": "exploitation"},
+      "601": {"libelle": "Achats stockés - Matières premières et fournitures", "categorie": "exploitation", "parent": "60"},
+      "602": {"libelle": "Achats stockés - Autres approvisionnements", "categorie": "exploitation", "parent": "60"},
+      "603": {"libelle": "Variation de stocks", "categorie": "exploitation", "parent": "60"},
+      "606": {"libelle": "Achats non stockés de matières et fournitures", "categorie": "exploitation", "parent": "60"},
+      "607": {"libelle": "Achats de marchandises", "categorie": "exploitation", "parent": "60"},
+      "608": {"libelle": "Frais accessoires d'achat", "categorie": "exploitation", "parent": "60"},
+      "609": {"libelle": "Rabais, remises et ristournes obtenus sur achats", "categorie": "exploitation", "parent": "60"},
+      
+      "61": {"libelle": "Services extérieurs", "categorie": "exploitation"},
+      "611": {"libelle": "Sous-traitance générale", "categorie": "exploitation", "parent": "61"},
+      "612": {"libelle": "Redevances de crédit-bail", "categorie": "exploitation", "parent": "61"},
+      "613": {"libelle": "Locations", "categorie": "exploitation", "parent": "61"},
+      "614": {"libelle": "Charges locatives et de copropriété", "categorie": "exploitation", "parent": "61"},
+      "615": {"libelle": "Entretien et réparations", "categorie": "exploitation", "parent": "61"},
+      "616": {"libelle": "Primes d'assurance", "categorie": "exploitation", "parent": "61"},
+      "617": {"libelle": "Études et recherches", "categorie": "exploitation", "parent": "61"},
+      "618": {"libelle": "Divers", "categorie": "exploitation", "parent": "61"},
+      "619": {"libelle": "RRR obtenus sur services extérieurs", "categorie": "exploitation", "parent": "61"},
+      
+      "62": {"libelle": "Autres services extérieurs", "categorie": "exploitation"},
+      "621": {"libelle": "Personnel extérieur à l'entreprise", "categorie": "exploitation", "parent": "62"},
+      "622": {"libelle": "Rémunérations d'intermédiaires et honoraires", "categorie": "exploitation", "parent": "62"},
+      "623": {"libelle": "Publicité, publications, relations publiques", "categorie": "exploitation", "parent": "62"},
+      "624": {"libelle": "Transports de biens et transports collectifs du personnel", "categorie": "exploitation", "parent": "62"},
+      "625": {"libelle": "Déplacements, missions et réceptions", "categorie": "exploitation", "parent": "62"},
+      "626": {"libelle": "Frais postaux et de télécommunications", "categorie": "exploitation", "parent": "62"},
+      "627": {"libelle": "Services bancaires et assimilés", "categorie": "exploitation", "parent": "62"},
+      "628": {"libelle": "Divers", "categorie": "exploitation", "parent": "62"},
+      "629": {"libelle": "RRR obtenus sur autres services extérieurs", "categorie": "exploitation", "parent": "62"},
+      
+      "63": {"libelle": "Impôts, taxes et versements assimilés", "categorie": "exploitation"},
+      "631": {"libelle": "Impôts, taxes et versements assimilés sur rémunérations (administration des impôts)", "categorie": "exploitation", "parent": "63"},
+      "633": {"libelle": "Impôts, taxes et versements assimilés sur rémunérations (autres organismes)", "categorie": "exploitation", "parent": "63"},
+      "635": {"libelle": "Autres impôts, taxes et versements assimilés (administration des impôts)", "categorie": "exploitation", "parent": "63"},
+      "637": {"libelle": "Autres impôts, taxes et versements assimilés (autres organismes)", "categorie": "exploitation", "parent": "63"},
+      
+      "64": {"libelle": "Charges de personnel", "categorie": "exploitation"},
+      "641": {"libelle": "Rémunérations du personnel", "categorie": "exploitation", "parent": "64"},
+      "645": {"libelle": "Charges de sécurité sociale et de prévoyance", "categorie": "exploitation", "parent": "64"},
+      "647": {"libelle": "Autres charges sociales", "categorie": "exploitation", "parent": "64"},
+      "648": {"libelle": "Autres charges de personnel", "categorie": "exploitation", "parent": "64"},
+      
+      "65": {"libelle": "Autres charges de gestion courante", "categorie": "exploitation"},
+      "651": {"libelle": "Redevances pour concessions, brevets, licences, marques, procédés, logiciels", "categorie": "exploitation", "parent": "65"},
+      "653": {"libelle": "Jetons de présence et rémunérations d'administrateurs", "categorie": "exploitation", "parent": "65"},
+      "654": {"libelle": "Pertes sur créances irrécouvrables", "categorie": "exploitation", "parent": "65"},
+      "655": {"libelle": "Quote-part de résultat sur opérations faites en commun", "categorie": "exploitation", "parent": "65"},
+      "658": {"libelle": "Charges diverses de gestion courante", "categorie": "exploitation", "parent": "65"},
+      
+      "66": {"libelle": "Charges financières", "categorie": "financier"},
+      "661": {"libelle": "Charges d'intérêts", "categorie": "financier", "parent": "66"},
+      "664": {"libelle": "Pertes sur créances liées à des participations", "categorie": "financier", "parent": "66"},
+      "665": {"libelle": "Escomptes accordés", "categorie": "financier", "parent": "66"},
+      "666": {"libelle": "Pertes de change", "categorie": "financier", "parent": "66"},
+      "667": {"libelle": "Charges nettes sur cessions de valeurs mobilières de placement", "categorie": "financier", "parent": "66"},
+      "668": {"libelle": "Autres charges financières", "categorie": "financier", "parent": "66"},
+      
+      "67": {"libelle": "Charges exceptionnelles", "categorie": "exceptionnel"},
+      "671": {"libelle": "Charges exceptionnelles sur opérations de gestion", "categorie": "exceptionnel", "parent": "67"},
+      "672": {"libelle": "Charges sur exercices antérieurs", "categorie": "exceptionnel", "parent": "67"},
+      "675": {"libelle": "Valeurs comptables des éléments d'actif cédés", "categorie": "exceptionnel", "parent": "67"},
+      "678": {"libelle": "Autres charges exceptionnelles", "categorie": "exceptionnel", "parent": "67"},
+      
+      "68": {"libelle": "Dotations aux amortissements, dépréciations et provisions", "categorie": "exploitation"},
+      "681": {"libelle": "Dotations aux amortissements, dépréciations et provisions - Exploitation", "categorie": "exploitation", "parent": "68"},
+      "686": {"libelle": "Dotations aux amortissements, dépréciations et provisions - Financier", "categorie": "financier", "parent": "68"},
+      "687": {"libelle": "Dotations aux amortissements, dépréciations et provisions - Exceptionnel", "categorie": "exceptionnel", "parent": "68"},
+      
+      "69": {"libelle": "Participation des salariés - Impôts sur les bénéfices et assimilés", "categorie": "participationImpots"},
+      "691": {"libelle": "Participation des salariés aux résultats", "categorie": "participationImpots", "parent": "69"},
+      "695": {"libelle": "Impôts sur les bénéfices", "categorie": "participationImpots", "parent": "69"},
+      "697": {"libelle": "Imposition forfaitaire annuelle des sociétés (supprimée depuis 2014)", "categorie": "participationImpots", "parent": "69"},
+      "698": {"libelle": "Intégration fiscale", "categorie": "participationImpots", "parent": "69"},
+      "699": {"libelle": "Produits - Report en arrière des déficits", "categorie": "participationImpots", "parent": "69"}
+    },
+    
+    "classe7": {
+      "70": {"libelle": "Ventes de produits fabriqués, prestations de services, marchandises", "categorie": "exploitation"},
+      "701": {"libelle": "Ventes de produits finis", "categorie": "exploitation", "parent": "70"},
+      "702": {"libelle": "Ventes de produits intermédiaires", "categorie": "exploitation", "parent": "70"},
+      "703": {"libelle": "Ventes de produits résiduels", "categorie": "exploitation", "parent": "70"},
+      "704": {"libelle": "Travaux", "categorie": "exploitation", "parent": "70"},
+      "705": {"libelle": "Études", "categorie": "exploitation", "parent": "70"},
+      "706": {"libelle": "Prestations de services", "categorie": "exploitation", "parent": "70"},
+      "707": {"libelle": "Ventes de marchandises", "categorie": "exploitation", "parent": "70"},
+      "708": {"libelle": "Produits des activités annexes", "categorie": "exploitation", "parent": "70"},
+      "709": {"libelle": "Rabais, remises et ristournes accordés par l'entreprise", "categorie": "exploitation", "parent": "70", "note": "Compte correcteur - Diminue le CA"},
+      
+      "71": {"libelle": "Production stockée (ou déstockage)", "categorie": "exploitation"},
+      "713": {"libelle": "Variation des stocks (en-cours de production de biens)", "categorie": "exploitation", "parent": "71"},
+      "714": {"libelle": "Variation des stocks (en-cours de production de services)", "categorie": "exploitation", "parent": "71"},
+      "715": {"libelle": "Variation des stocks (produits)", "categorie": "exploitation", "parent": "71"},
+      
+      "72": {"libelle": "Production immobilisée", "categorie": "exploitation"},
+      "721": {"libelle": "Immobilisations incorporelles", "categorie": "exploitation", "parent": "72"},
+      "722": {"libelle": "Immobilisations corporelles", "categorie": "exploitation", "parent": "72"},
+      
+      "74": {"libelle": "Subventions d'exploitation", "categorie": "exploitation"},
+      "741": {"libelle": "Subventions d'équilibre", "categorie": "exploitation", "parent": "74"},
+      "747": {"libelle": "Quote-part des subventions d'investissement virée au résultat de l'exercice", "categorie": "exploitation", "parent": "74"},
+      "748": {"libelle": "Autres subventions d'exploitation", "categorie": "exploitation", "parent": "74"},
+      
+      "75": {"libelle": "Autres produits de gestion courante", "categorie": "exploitation"},
+      "751": {"libelle": "Redevances pour concessions, brevets, licences, marques, procédés", "categorie": "exploitation", "parent": "75"},
+      "752": {"libelle": "Revenus des immeubles non affectés à des activités professionnelles", "categorie": "exploitation", "parent": "75"},
+      "753": {"libelle": "Jetons de présence et rémunérations d'administrateurs, gérants", "categorie": "exploitation", "parent": "75"},
+      "754": {"libelle": "Ristournes perçues des coopératives (provenant des excédents)", "categorie": "exploitation", "parent": "75"},
+      "755": {"libelle": "Quote-part de résultat sur opérations faites en commun", "categorie": "exploitation", "parent": "75"},
+      "756": {"libelle": "Gains de change sur créances et dettes commerciales", "categorie": "exploitation", "parent": "75"},
+      "757": {"libelle": "Produits des cessions d'immobilisations incorporelles et corporelles", "categorie": "exploitation", "parent": "75"},
+      "758": {"libelle": "Indemnités et autres produits", "categorie": "exploitation", "parent": "75"},
+      
+      "76": {"libelle": "Produits financiers", "categorie": "financier"},
+      "761": {"libelle": "Produits de participations", "categorie": "financier", "parent": "76"},
+      "762": {"libelle": "Produits des autres immobilisations financières", "categorie": "financier", "parent": "76"},
+      "763": {"libelle": "Revenus des autres créances", "categorie": "financier", "parent": "76"},
+      "764": {"libelle": "Revenus des valeurs mobilières de placement", "categorie": "financier", "parent": "76"},
+      "765": {"libelle": "Escomptes obtenus", "categorie": "financier", "parent": "76"},
+      "766": {"libelle": "Gains de change", "categorie": "financier", "parent": "76"},
+      "767": {"libelle": "Produits nets sur cessions de valeurs mobilières de placement", "categorie": "financier", "parent": "76"},
+      "768": {"libelle": "Autres produits financiers", "categorie": "financier", "parent": "76"},
+      
+      "77": {"libelle": "Produits exceptionnels", "categorie": "exceptionnel"},
+      "771": {"libelle": "Produits exceptionnels sur opérations de gestion", "categorie": "exceptionnel", "parent": "77"},
+      "772": {"libelle": "Produits sur exercices antérieurs", "categorie": "exceptionnel", "parent": "77"},
+      "775": {"libelle": "Produits des cessions d'éléments d'actif", "categorie": "exceptionnel", "parent": "77"},
+      "777": {"libelle": "Quote-part des subventions d'investissement virée au résultat de l'exercice", "categorie": "exceptionnel", "parent": "77"},
+      "778": {"libelle": "Autres produits exceptionnels", "categorie": "exceptionnel", "parent": "77"},
+      
+      "78": {"libelle": "Reprises sur amortissements, dépréciations et provisions", "categorie": "exploitation"},
+      "781": {"libelle": "Reprises sur amortissements, dépréciations et provisions - Exploitation", "categorie": "exploitation", "parent": "78"},
+      "786": {"libelle": "Reprises sur provisions - Financier", "categorie": "financier", "parent": "78"},
+      "787": {"libelle": "Reprises sur provisions - Exceptionnel", "categorie": "exceptionnel", "parent": "78"},
+      
+      "79": {"libelle": "Transferts de charges", "categorie": "exploitation"},
+      "791": {"libelle": "Transferts de charges d'exploitation", "categorie": "exploitation", "parent": "79"},
+      "796": {"libelle": "Transferts de charges financières", "categorie": "financier", "parent": "79"},
+      "797": {"libelle": "Transferts de charges exceptionnelles", "categorie": "exceptionnel", "parent": "79"}
+    }
+  },
+  
+  "chiffreAffaires": {
+    "description": "Le chiffre d'affaires représente le montant des ventes de biens et services réalisés par l'entreprise dans le cadre de son activité normale et courante",
+    "formule": "70x (701 à 708 - 709)",
+    "comptes": ["701", "702", "703", "704", "705", "706", "707", "708", "709"],
+    "note": "Le compte 709 (RRR accordés) diminue le CA car il enregistre les réductions commerciales accordées aux clients"
+  },
+  
+  "categories": {
+    "exploitation": {
+      "description": "Opérations courantes de l'entreprise",
+      "charges": ["60", "61", "62", "63", "64", "65", "681"],
+      "produits": ["70", "71", "72", "74", "75", "781", "791"],
+      "note": "Les comptes 681, 781, 791 sont les parties 'exploitation' des comptes ventilés 68, 78, 79"
+    },
+    "financier": {
+      "description": "Opérations de nature financière",
+      "charges": ["66", "686"],
+      "produits": ["76", "786", "796"],
+      "note": "Les comptes 686, 786, 796 sont les parties 'financier' des comptes ventilés 68, 78, 79"
+    },
+    "exceptionnel": {
+      "description": "Opérations exceptionnelles hors cycle normal",
+      "charges": ["67", "687"],
+      "produits": ["77", "787", "797"],
+      "note": "Les comptes 687, 787, 797 sont les parties 'exceptionnel' des comptes ventilés 68, 78, 79"
+    },
+    "participationImpots": {
+      "description": "Participation des salariés et impôts sur les bénéfices",
+      "charges": ["69"],
+      "produits": []
+    }
+  },
+  
+  "comptesVentiles": {
+    "description": "Comptes qui doivent être ventilés entre plusieurs catégories selon leur nature",
+    "regles": {
+      "68": {
+        "libelle": "Dotations aux amortissements, dépréciations et provisions",
+        "ventilation": {
+          "681": "Exploitation - Dotations aux amortissements et provisions d'exploitation",
+          "686": "Financier - Dotations aux amortissements et provisions financières",
+          "687": "Exceptionnel - Dotations aux amortissements et provisions exceptionnelles"
+        },
+        "traitement": "Regrouper au niveau 3 (681, 686, 687) et non au niveau 2 (68)",
+        "affichage": "681 en Exploitation, 686 en Financier, 687 en Exceptionnel"
+      },
+      "78": {
+        "libelle": "Reprises sur amortissements, dépréciations et provisions",
+        "ventilation": {
+          "781": "Exploitation - Reprises sur amortissements et provisions d'exploitation",
+          "786": "Financier - Reprises sur provisions financières",
+          "787": "Exceptionnel - Reprises sur provisions exceptionnelles"
+        },
+        "traitement": "Regrouper au niveau 3 (781, 786, 787) et non au niveau 2 (78)",
+        "affichage": "781 en Exploitation, 786 en Financier, 787 en Exceptionnel"
+      },
+      "79": {
+        "libelle": "Transferts de charges",
+        "ventilation": {
+          "791": "Exploitation - Transferts de charges d'exploitation",
+          "796": "Financier - Transferts de charges financières",
+          "797": "Exceptionnel - Transferts de charges exceptionnelles"
+        },
+        "traitement": "Regrouper au niveau 3 (791, 796, 797) et non au niveau 2 (79)",
+        "affichage": "791 en Exploitation, 796 en Financier, 797 en Exceptionnel"
+      }
+    },
+    "important": "Ces comptes NE DOIVENT PAS être regroupés au niveau 2. Ils doivent apparaître au niveau 3 dans leurs catégories respectives."
+  },
+  
+  "resultatsIntermediaires": {
+    "exploitation": {
+      "libelle": "Résultat d'Exploitation",
+      "formule": "Produits d'exploitation - Charges d'exploitation",
+      "interpretation": "Mesure la performance de l'activité courante de l'entreprise"
+    },
+    "financier": {
+      "libelle": "Résultat Financier",
+      "formule": "Produits financiers - Charges financières",
+      "interpretation": "Mesure l'impact de la gestion financière et de la politique de financement"
+    },
+    "courantAvantImpots": {
+      "libelle": "Résultat Courant avant Impôts",
+      "formule": "Résultat d'exploitation + Résultat financier",
+      "interpretation": "Performance globale de l'activité normale avant éléments exceptionnels et impôts"
+    },
+    "exceptionnel": {
+      "libelle": "Résultat Exceptionnel",
+      "formule": "Produits exceptionnels - Charges exceptionnelles",
+      "interpretation": "Opérations non récurrentes hors cycle normal d'exploitation"
+    },
+    "net": {
+      "libelle": "Résultat Net de l'Exercice",
+      "formule": "Résultat courant + Résultat exceptionnel - Participation des salariés - Impôts sur les bénéfices",
+      "interpretation": "Bénéfice ou perte de l'exercice après tous les éléments"
+    }
+  },
+  
+  "reglesCalcul": {
+    "charges": {
+      "principe": "Les charges sont normalement débitrices",
+      "calcul": "Solde = Débit - Crédit",
+      "interpretation": "Un solde positif représente une charge effective"
+    },
+    "produits": {
+      "principe": "Les produits sont normalement créditeurs",
+      "calcul": "Solde = Crédit - Débit",
+      "interpretation": "Un solde positif représente un produit effectif"
+    }
+  },
+  
+  "presentation": {
+    "niveaux": {
+      "niveau2": {
+        "description": "Agrégation principale (60, 61, 62, etc.)",
+        "affichage": "Toujours affiché dans le compte de résultat"
+      },
+      "niveau3": {
+        "description": "Détails optionnels (601, 602, 611, etc.)",
+        "affichage": "Affiché en sous-détail si activé"
+      }
+    },
+    "ordre": {
+      "charges": ["exploitation", "financieres", "exceptionnelles", "participationImpots"],
+      "produits": ["exploitation", "financiers", "exceptionnels"]
+    }
+  }
+}
