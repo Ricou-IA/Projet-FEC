@@ -1,4 +1,6 @@
 import reglesAffectation from '../data/regles-affectation-comptes.json';
+import reglesAffectationBilan from '../data/regles-affectation-bilan.json';
+import { getAccountLabel, getFixedPosition } from './AccountClassifier';
 
 /**
  * Module de gestion des comptes à double position pour le Bilan
@@ -86,15 +88,88 @@ export function calculerDoublePosition(fecData, compteRacine) {
     // Si solde = 0, ne rien faire (compte soldé)
   });
 
-  // 4. Récupérer les libellés depuis le JSON
+  // 4. Récupérer les libellés automatiquement depuis le JSON
+  // D'abord, chercher dans regles-affectation-comptes.json (comptesDoublePosition)
   const comptesDoublePosition = reglesAffectation.comptesDoublePosition?.comptes || {};
   const infoCompte = comptesDoublePosition[compteRacine] || {};
   
+  // Récupérer le libellé du compte depuis regles-affectation-bilan.json en priorité
+  let libelleCompte = null;
+  const classe = compteRacine.substring(0, 1);
+  if (reglesAffectationBilan && reglesAffectationBilan.libellesComptes) {
+    const classeKey = `classe${classe}`;
+    const libellesClasse = reglesAffectationBilan.libellesComptes[classeKey];
+    if (libellesClasse && libellesClasse[compteRacine]) {
+      const compteInfo = libellesClasse[compteRacine];
+      libelleCompte = typeof compteInfo === 'string' ? compteInfo : compteInfo.libelle;
+    }
+  }
+  
+  // Si pas trouvé dans regles-affectation-bilan.json, utiliser getAccountLabel
+  if (!libelleCompte || libelleCompte === `Compte ${compteRacine}`) {
+    libelleCompte = getAccountLabel(compteRacine);
+  }
+  
+  // Déterminer la rubrique automatiquement selon la classe du compte
+  const determinerRubrique = (compteRacine, position) => {
+    const classe = compteRacine.substring(0, 1);
+    const sousClasse = compteRacine.substring(0, 2);
+    
+    if (position === 'actif') {
+      if (sousClasse === '18') return 'Comptes de liaison';
+      if (classe === '4') {
+        if (sousClasse === '41') return 'B - Créances';
+        if (sousClasse === '45' || sousClasse === '46') return 'B - Créances';
+        return 'B - Créances';
+      }
+      if (sousClasse === '50') return 'C - Trésorerie';
+      if (sousClasse === '51') return 'C - Trésorerie';
+      return 'Créances';
+    } else {
+      if (sousClasse === '18') return 'Comptes de liaison';
+      if (classe === '4') {
+        if (sousClasse === '40') return 'A - Dettes';
+        if (sousClasse === '42' || sousClasse === '43') return 'A - Dettes';
+        if (sousClasse === '45' || sousClasse === '46') return 'A - Dettes';
+        return 'A - Dettes';
+      }
+      if (sousClasse === '50') return 'Emprunts et dettes financières';
+      if (sousClasse === '51') return 'Emprunts et dettes financières';
+      return 'Dettes';
+    }
+  };
+  
+  // Générer les libellés automatiquement
+  // Priorité : 1) libellé spécifique du JSON comptesDoublePosition, 2) libellé du compte depuis regles-affectation-bilan.json
+  let libelleActif = infoCompte.soldeDebiteur?.ligne;
+  let libellePassif = infoCompte.soldeCrediteur?.ligne;
+  
+  // Si pas de libellé spécifique, utiliser le libellé du compte principal
+  if (!libelleActif) {
+    if (libelleCompte && libelleCompte !== `Compte ${compteRacine}`) {
+      // Utiliser le libellé tel quel (ex: "Clients et comptes rattachés")
+      libelleActif = libelleCompte;
+    } else {
+      // Fallback : générer un libellé générique
+      libelleActif = `${compteRacine} - Actif`;
+    }
+  }
+  
+  if (!libellePassif) {
+    if (libelleCompte && libelleCompte !== `Compte ${compteRacine}`) {
+      // Utiliser le libellé tel quel (ex: "Clients et comptes rattachés" ou "Fournisseurs et comptes rattachés")
+      libellePassif = libelleCompte;
+    } else {
+      // Fallback : générer un libellé générique
+      libellePassif = `${compteRacine} - Passif`;
+    }
+  }
+  
   const libelles = {
-    actif: infoCompte.soldeDebiteur?.ligne || `${compteRacine} - Actif`,
-    passif: infoCompte.soldeCrediteur?.ligne || `${compteRacine} - Passif`,
-    rubriqueActif: infoCompte.soldeDebiteur?.rubrique || 'Créances',
-    rubriquePassif: infoCompte.soldeCrediteur?.rubrique || 'Dettes'
+    actif: libelleActif,
+    passif: libellePassif,
+    rubriqueActif: infoCompte.soldeDebiteur?.rubrique || determinerRubrique(compteRacine, 'actif'),
+    rubriquePassif: infoCompte.soldeCrediteur?.rubrique || determinerRubrique(compteRacine, 'passif')
   };
 
   return {
@@ -234,10 +309,15 @@ export function calculerDoublePositionBanques(fecData) {
     return { actif: 0, passif: 0, detail: { banquesActif: [], banquesPassif: [] }, libelles: {} };
   }
 
-  // 1. Filtrer les écritures des comptes 51x
+  // 1. Filtrer les écritures des comptes 51x, en excluant ceux avec position fixe
+  // Les comptes avec position fixe (comme 519 = passif) doivent être traités séparément
   const ecritures = fecData.filter(row => {
     const compteNum = row.compteNum || '';
-    return compteNum.startsWith('51');
+    if (!compteNum.startsWith('51')) return false;
+    
+    // Exclure les comptes avec position fixe définie dans le JSON
+    const fixedPos = getFixedPosition(compteNum);
+    return !fixedPos; // Ne garder que ceux sans position fixe
   });
 
   // 2. Calculer le solde de chaque compte bancaire individuel

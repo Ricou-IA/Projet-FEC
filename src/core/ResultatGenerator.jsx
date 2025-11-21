@@ -67,9 +67,6 @@ export class CompteResultatGeneratorV2 {
       throw new Error('Aucune donnée FEC fournie');
     }
 
-    console.log('=== GÉNÉRATION COMPTE DE RÉSULTAT PCG 2025 ===');
-    console.log(`Nombre d'écritures à traiter : ${parseResult.data.length}`);
-
     // Étape 1 : Agrégation des écritures par compte
     this._agregerEcritures(parseResult.data);
     
@@ -81,8 +78,6 @@ export class CompteResultatGeneratorV2 {
     
     // Étape 4 : Calcul du chiffre d'affaires
     this._calculerChiffreAffaires();
-
-    console.log('=== GÉNÉRATION TERMINÉE ===\n');
     
     return this._formaterResultat();
   }
@@ -93,8 +88,6 @@ export class CompteResultatGeneratorV2 {
    * @private
    */
   _agregerEcritures(ecritures) {
-    console.log('\n--- ÉTAPE 1 : Agrégation des écritures ---');
-    
     ecritures.forEach(ecriture => {
       const compteNum = ecriture.compteNum || '';
       const classe = compteNum.charAt(0);
@@ -131,8 +124,6 @@ export class CompteResultatGeneratorV2 {
         compte.solde = compte.credit - compte.debit;
       }
     });
-
-    console.log(`✓ ${Object.keys(this.comptes).length} comptes agrégés`);
   }
 
   /**
@@ -143,9 +134,6 @@ export class CompteResultatGeneratorV2 {
    * @private
    */
   _classerComptes() {
-    console.log('\n--- ÉTAPE 2 : Classification des comptes ---');
-    console.log('Étape 1 : Classification de chaque compte initial');
-    
     // Structure pour regrouper les comptes par niveau 2 ET par catégorie
     // Note: Les catégories sont différentes pour charges et produits
     const comptesParCategorieEtNiveau2 = {
@@ -166,7 +154,6 @@ export class CompteResultatGeneratorV2 {
       const categorie = this._determinerCategorie(compte.numero);
       
       if (!categorie) {
-        console.log(`  Compte ${compte.numero} non classifié, ignoré`);
         return;
       }
       
@@ -181,6 +168,7 @@ export class CompteResultatGeneratorV2 {
       if (!comptesParCategorieEtNiveau2[categorie][niveau2]) {
         comptesParCategorieEtNiveau2[categorie][niveau2] = {
           numero: niveau2, // Toujours afficher au niveau 2
+          classe: niveau2, // Alias pour compatibilité avec la vue
           libelle: this._getLibelleCompte(niveau2),
           debit: 0,
           credit: 0,
@@ -217,14 +205,6 @@ export class CompteResultatGeneratorV2 {
         }
       }
     });
-    
-    console.log('Étape 2 : Regroupement par niveau 2 terminé');
-    console.log('  Catégories exploitation :', Object.keys(comptesParCategorieEtNiveau2.exploitation));
-    console.log('  Catégories financieres  :', Object.keys(comptesParCategorieEtNiveau2.financieres));
-    console.log('  Catégories exceptionnelles (charges) :', Object.keys(comptesParCategorieEtNiveau2.exceptionnelles));
-    console.log('  Catégories participationImpots :', Object.keys(comptesParCategorieEtNiveau2.participationImpots));
-    console.log('  Catégories produits exploit :', Object.keys(comptesParCategorieEtNiveau2.financiers));
-    console.log('  Catégories produits exceptionnels :', Object.keys(comptesParCategorieEtNiveau2.exceptionnels));
 
     // Transférer dans la structure de résultats
     Object.keys(comptesParCategorieEtNiveau2).forEach(categorie => {
@@ -252,14 +232,6 @@ export class CompteResultatGeneratorV2 {
     Object.keys(this.resultats.produits).forEach(cat => {
       this.resultats.produits[cat].sort((a, b) => a.numero.localeCompare(b.numero));
     });
-
-    console.log('✓ Classification terminée (niveau 2 uniquement)');
-    console.log(`  Charges d'exploitation : ${this.resultats.charges.exploitation.length} postes`);
-    console.log(`  Charges financières : ${this.resultats.charges.financieres.length} postes`);
-    console.log(`  Charges exceptionnelles : ${this.resultats.charges.exceptionnelles.length} postes`);
-    console.log(`  Produits d'exploitation : ${this.resultats.produits.exploitation.length} postes`);
-    console.log(`  Produits financiers : ${this.resultats.produits.financiers.length} postes`);
-    console.log(`  Produits exceptionnels : ${this.resultats.produits.exceptionnels.length} postes`);
   }
 
   /**
@@ -267,8 +239,6 @@ export class CompteResultatGeneratorV2 {
    * @private
    */
   _calculerTotaux() {
-    console.log('\n--- ÉTAPE 3 : Calcul des totaux ---');
-
     // Totaux des charges
     this.resultats.totaux.chargesExploitation = this._sommerSoldes(this.resultats.charges.exploitation);
     this.resultats.totaux.chargesFinancieres = this._sommerSoldes(this.resultats.charges.financieres);
@@ -298,15 +268,6 @@ export class CompteResultatGeneratorV2 {
       this.resultats.resultatsIntermediaires.courantAvantImpots + 
       this.resultats.resultatsIntermediaires.exceptionnel - 
       this.resultats.totaux.participationImpots;
-
-    console.log('✓ Totaux calculés :');
-    console.log(`  Total charges d'exploitation : ${this._formatMontant(this.resultats.totaux.chargesExploitation)}`);
-    console.log(`  Total produits d'exploitation : ${this._formatMontant(this.resultats.totaux.produitsExploitation)}`);
-    console.log(`  Résultat d'exploitation : ${this._formatMontant(this.resultats.resultatsIntermediaires.exploitation)}`);
-    console.log(`  Résultat financier : ${this._formatMontant(this.resultats.resultatsIntermediaires.financier)}`);
-    console.log(`  Résultat courant avant impôts : ${this._formatMontant(this.resultats.resultatsIntermediaires.courantAvantImpots)}`);
-    console.log(`  Résultat exceptionnel : ${this._formatMontant(this.resultats.resultatsIntermediaires.exceptionnel)}`);
-    console.log(`  Résultat net : ${this._formatMontant(this.resultats.resultatsIntermediaires.net)}`);
   }
 
   /**
@@ -314,8 +275,6 @@ export class CompteResultatGeneratorV2 {
    * @private
    */
   _calculerChiffreAffaires() {
-    console.log('\n--- ÉTAPE 4 : Calcul du chiffre d\'affaires ---');
-    
     // CA = 701 + 702 + 703 + 704 + 705 + 706 + 707 + 708 + 709
     // Note : 709 (RRR accordés) est déjà négatif, il se soustrait automatiquement
     const codesCA = ['701', '702', '703', '704', '705', '706', '707', '708', '709'];
@@ -327,8 +286,6 @@ export class CompteResultatGeneratorV2 {
         }
       });
     });
-
-    console.log(`✓ Chiffre d'affaires : ${this._formatMontant(this.resultats.chiffreAffaires)}`);
   }
 
   /**

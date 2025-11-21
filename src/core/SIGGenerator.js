@@ -201,24 +201,6 @@ export class SIGGenerator {
     return sig;
   }
 
-  /**
-   * Récupère les formules des SIG depuis le JSON
-   * @returns {Array} Liste des formules SIG
-   */
-  static getSIGFormulas() {
-    return reglesAffectation.soldesIntermediairesGestion?.sig || [];
-  }
-
-  /**
-   * Récupère les comptes associés à un SIG spécifique
-   * @param {string} sigName - Nom du SIG (ex: "Marge commerciale")
-   * @returns {Array|null} Liste des comptes ou null
-   */
-  static getSIGAccounts(sigName) {
-    const sigRules = reglesAffectation.soldesIntermediairesGestion?.sig || [];
-    const sigRule = sigRules.find(rule => rule.nom === sigName);
-    return sigRule ? sigRule.comptes : null;
-  }
 }
 
 // Export de la fonction principale pour compatibilité

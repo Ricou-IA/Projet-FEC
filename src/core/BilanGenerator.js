@@ -1,737 +1,493 @@
-import {
-  getAccountType,
-  getBilanPosition,
-  getResultatPosition,
-  getAccountLabel,
-  isRegularisationAccount,
-  isTVAAccount,
-  isDoublePositionAccount,
-  getDoublePositionInfo
-} from './AccountClassifier';
-import {
-  calculerDoublePosition,
-  calculerDoublePositionTVA,
-  calculerDoublePositionBanques,
-  getComptesDoublePosition,
-  validerBilan
-} from './BilanDoublePosition';
-import reglesAffectation from '../data/regles-affectation-comptes.json';
+// BilanGenerator.js - Version simplifiée et fiable
+import { getAccountLabel } from './AccountClassifier';
 
 /**
- * Générateur de Bilan selon le Plan Comptable Général (PCG) 2025
- * Utilise AccountClassifier et les règles définies dans regles-affectation-comptes.json
+ * RÈGLES COMPTABLES PCG POUR LE BILAN
+ * 
+ * ACTIF (ce que l'entreprise possède) :
+ * - Classe 2 : Immobilisations (valeur brute - amortissements = valeur nette)
+ * - Classe 3 : Stocks
+ * - Classe 4 : Créances (solde débiteur uniquement)
+ * - Classe 5 : Trésorerie active (solde débiteur uniquement)
+ * 
+ * PASSIF (comment l'entreprise finance son actif) :
+ * - Classe 1 : Capitaux propres (+ résultat)
+ * - Classe 4 : Dettes (solde créditeur uniquement)
+ * - Classe 5 : Trésorerie passive (solde créditeur uniquement)
+ * 
+ * COMPTES CORRECTEURS :
+ * - Classe 28x et 29x : Amortissements et dépréciations (à soustraire de l'actif)
+ * 
+ * RÉSULTAT :
+ * - Classe 7 (produits) - Classe 6 (charges) = Résultat net → au passif (compte 12)
  */
+
 export class BilanGenerator {
+  
   /**
-   * Génère le bilan à partir des données FEC
-   * @param {Object} parseResult - Résultat du parsing FEC contenant { data: [] }
-   * @returns {Object|null} Structure du bilan ou null si pas de données
+   * Point d'entrée principal - génère le bilan complet
    */
   static generateBilan(parseResult) {
-    if (!parseResult || !parseResult.data || parseResult.data.length === 0) {
-      return null;
-    }
+    if (!parseResult?.data?.length) return null;
 
-    // RÈGLE CRITIQUE : Ne JAMAIS compenser les soldes débiteurs et créditeurs
-    // Utiliser le module BilanDoublePosition pour garantir le respect de cette règle
-    const actif = {};
-    const passif = {};
-    const comptesRegulisation = {};
-    
-    // Filtrer les données FEC pour ne garder que les comptes de BILAN
-    const fecBilan = parseResult.data.filter(row => {
+    // ÉTAPE 1 : Calculer les soldes de tous les comptes
+    const soldes = this._calculerSoldesTousComptes(parseResult.data);
+
+    // ÉTAPE 2 : Calculer le résultat (classe 6 et 7)
+    const resultat = this._calculerResultat(soldes);
+
+    // ÉTAPE 3 : Extraire les amortissements (28x et 29x)
+    const amortissements = this._extraireAmortissements(soldes);
+
+    // ÉTAPE 4 : Affecter les comptes à l'actif ou au passif
+    const { actif, passif } = this._affecterComptesAuBilan(soldes, amortissements);
+
+    // ÉTAPE 5 : Ajouter le résultat au passif
+    this._ajouterResultatAuPassif(passif, resultat);
+
+    // ÉTAPE 6 : Structurer et calculer les totaux
+    const bilan = this._structurerBilan(actif, passif);
+
+    // ÉTAPE 7 : Valider l'équilibre
+    bilan.validation = this._validerBilan(bilan);
+
+    return bilan;
+  }
+
+  /**
+   * ÉTAPE 1 : Calcule le solde de chaque compte (débit - crédit)
+   */
+  static _calculerSoldesTousComptes(fecData) {
+    const soldes = {};
+
+    fecData.forEach(row => {
       const compteNum = row.compteNum || '';
-      return getAccountType(compteNum) === 'BILAN';
-    });
+      if (!compteNum) return;
 
-    // 1. TRAITER LES COMPTES TVA EN PREMIER (NON COMPENSABLES)
-    // RÈGLE : 4456 (TVA déductible) ≠ 4455/4457 (TVA à payer)
-    const tvaResult = calculerDoublePositionTVA(fecBilan);
-    
-    if (tvaResult.actif[4456] > 0) {
-      // TVA déductible → ACTIF
-      BilanGenerator._addTVAToActif(actif, tvaResult.actif[4456], tvaResult.detail[4456]);
-    }
-    
-    if (tvaResult.passif[4455] > 0) {
-      // TVA à décaisser → PASSIF
-      BilanGenerator._addTVAToPassif(passif, tvaResult.passif[4455], '4455', tvaResult.detail[4455]);
-    }
-    
-    if (tvaResult.passif[4457] > 0) {
-      // TVA collectée → PASSIF
-      BilanGenerator._addTVAToPassif(passif, tvaResult.passif[4457], '4457', tvaResult.detail[4457]);
-    }
-
-    // 2. TRAITER LES COMPTES BANQUES (51) - Calcul PAR BANQUE
-    // RÈGLE : Ne pas compenser entre banques différentes
-    const banquesResult = calculerDoublePositionBanques(fecBilan);
-    
-    if (banquesResult.actif > 0) {
-      // Disponibilités bancaires → ACTIF
-      BilanGenerator._addDoublePositionToActif(
-        actif, 
-        '51', 
-        banquesResult.libelles.actif, 
-        banquesResult.detail.banquesActif, 
-        banquesResult.actif, 
-        banquesResult.libelles.rubriqueActif || 'C - Trésorerie'
-      );
-    }
-    
-    if (banquesResult.passif > 0) {
-      // Découverts bancaires → PASSIF
-      BilanGenerator._addDoublePositionToPassif(
-        passif, 
-        '51', 
-        banquesResult.libelles.passif, 
-        banquesResult.detail.banquesPassif, 
-        banquesResult.passif, 
-        banquesResult.libelles.rubriquePassif || 'Emprunts et dettes financières'
-      );
-    }
-
-    // 3. TRAITER LES AUTRES COMPTES À DOUBLE POSITION
-    // Exclure 44 (TVA déjà traitée séparément) et 51 (banques déjà traitées)
-    const racinesDoublePosition = getComptesDoublePosition().filter(r => 
-      r !== '44' && r !== '51'
-    );
-    
-    racinesDoublePosition.forEach(racine => {
-      // Exclure les comptes déjà traités du calcul
-      const fecFiltre = fecBilan.filter(row => {
-        const compteNum = row.compteNum || '';
-        // Ne pas inclure les comptes TVA (déjà traités)
-        if (isTVAAccount(compteNum)) return false;
-        // Ne pas inclure les banques (déjà traitées)
-        if (racine !== '51' && compteNum.startsWith('51')) return false;
-        // Exclure aussi 486/487 (traités séparément)
-        if (compteNum.startsWith('486') || compteNum.startsWith('487')) return false;
-        return compteNum.startsWith(racine);
-      });
-
-      const result = calculerDoublePosition(fecFiltre, racine);
-      
-      // Ajouter à l'ACTIF si total > 0
-      if (result.actif > 0) {
-        BilanGenerator._addDoublePositionToActif(
-          actif, 
-          racine, 
-          result.libelles.actif, 
-          result.detail.debiteurs, 
-          result.actif, 
-          result.libelles.rubriqueActif
-        );
-      }
-      
-      // Ajouter au PASSIF si total > 0
-      if (result.passif > 0) {
-        BilanGenerator._addDoublePositionToPassif(
-          passif, 
-          racine, 
-          result.libelles.passif, 
-          result.detail.crediteurs, 
-          result.passif, 
-          result.libelles.rubriquePassif
-        );
-      }
-    });
-
-    // 4. TRAITER LES COMPTES DE RÉGULARISATION (486, 487)
-    const fecRegulisation = fecBilan.filter(row => {
-      const compteNum = row.compteNum || '';
-      return compteNum.startsWith('486') || compteNum.startsWith('487');
-    });
-
-    // Agrégation par compte de régularisation
-    const comptes486 = {};
-    const comptes487 = {};
-
-    fecRegulisation.forEach(row => {
-      const compteNum = row.compteNum || '';
-      
-      if (compteNum.startsWith('486')) {
-        if (!comptes486[compteNum]) {
-          comptes486[compteNum] = {
-            compteNum,
-            compteLibelle: row.compteLibelle || getAccountLabel(compteNum),
-            totalDebit: 0,
-            totalCredit: 0
-          };
-        }
-        comptes486[compteNum].totalDebit += row.debit || 0;
-        comptes486[compteNum].totalCredit += row.credit || 0;
-      } else if (compteNum.startsWith('487')) {
-        if (!comptes487[compteNum]) {
-          comptes487[compteNum] = {
-            compteNum,
-            compteLibelle: row.compteLibelle || getAccountLabel(compteNum),
-            totalDebit: 0,
-            totalCredit: 0
-          };
-        }
-        comptes487[compteNum].totalDebit += row.debit || 0;
-        comptes487[compteNum].totalCredit += row.credit || 0;
-      }
-    });
-
-    // 486 - Charges constatées d'avance → ACTIF
-    Object.values(comptes486).forEach(compte => {
-      compte.solde = compte.totalDebit - compte.totalCredit;
-      if (compte.solde > 0) {
-        comptesRegulisation[compte.compteNum] = compte;
-        BilanGenerator._addToActif(actif, compte, '486', 'regularisation');
-      }
-    });
-
-    // 487 - Produits constatés d'avance → PASSIF
-    Object.values(comptes487).forEach(compte => {
-      compte.solde = compte.totalCredit - compte.totalDebit;
-      if (compte.solde > 0) {
-        comptesRegulisation[compte.compteNum] = compte;
-        BilanGenerator._addToPassif(passif, compte, '487', 'regularisation');
-      }
-    });
-
-    // 5. TRAITER LES AUTRES COMPTES (position fixe)
-    // Exclure tous les comptes déjà traités
-    const comptesTraites = new Set();
-    
-    // Ajouter les comptes à double position
-    getComptesDoublePosition().forEach(r => {
-      fecBilan.filter(row => {
-        const compteNum = row.compteNum || '';
-        return compteNum.startsWith(r);
-      }).forEach(row => comptesTraites.add(row.compteNum));
-    });
-    
-    // Ajouter les comptes TVA
-    fecBilan.filter(row => isTVAAccount(row.compteNum)).forEach(row => 
-      comptesTraites.add(row.compteNum)
-    );
-    
-    // Ajouter les comptes de régularisation
-    Object.keys(comptesRegulisation).forEach(compteNum => 
-      comptesTraites.add(compteNum)
-    );
-
-    // Traiter les comptes restants
-    fecBilan.filter(row => !comptesTraites.has(row.compteNum)).forEach(row => {
-      const compteNum = row.compteNum || '';
-      const classe = compteNum.substring(0, 1);
-      const sousClasse = compteNum.substring(0, 2);
-
-      // Agrégation par compte
-      if (!comptesRegulisation[compteNum]) {
-        comptesRegulisation[compteNum] = {
+      if (!soldes[compteNum]) {
+        soldes[compteNum] = {
           compteNum,
           compteLibelle: row.compteLibelle || getAccountLabel(compteNum),
-          totalDebit: 0,
-          totalCredit: 0,
+          debit: 0,
+          credit: 0,
           solde: 0
         };
       }
-      
-      comptesRegulisation[compteNum].totalDebit += row.debit || 0;
-      comptesRegulisation[compteNum].totalCredit += row.credit || 0;
+
+      soldes[compteNum].debit += row.debit || 0;
+      soldes[compteNum].credit += row.credit || 0;
     });
 
-    // Calculer les soldes et classer
-    Object.values(comptesRegulisation).forEach(compte => {
+    // Calculer le solde final (débit - crédit)
+    Object.values(soldes).forEach(compte => {
+      compte.solde = compte.debit - compte.credit;
+    });
+
+    return soldes;
+  }
+
+  /**
+   * ÉTAPE 2 : Calcule le résultat (Produits - Charges)
+   */
+  static _calculerResultat(soldes) {
+    let produits = 0;  // Classe 7
+    let charges = 0;   // Classe 6
+
+    Object.values(soldes).forEach(compte => {
+      const classe = compte.compteNum[0];
+
+      if (classe === '7') {
+        // Produits : solde créditeur normal → credit - debit
+        produits += compte.credit - compte.debit;
+      } else if (classe === '6') {
+        // Charges : solde débiteur normal → debit - credit
+        charges += compte.debit - compte.credit;
+      }
+    });
+
+    return produits - charges;
+  }
+
+  /**
+   * ÉTAPE 3 : Extrait les amortissements (28x et 29x)
+   */
+  static _extraireAmortissements(soldes) {
+    const amortissements = {
+      '20': 0, '21': 0, '22': 0, '23': 0, '26': 0, '27': 0
+    };
+
+    Object.values(soldes).forEach(compte => {
       const compteNum = compte.compteNum;
+      
+      // Les amortissements ont un solde créditeur → on prend la valeur absolue du crédit net
+      const montantAmortissement = Math.max(0, compte.credit - compte.debit);
+
+      // Mapping des amortissements vers les immobilisations
+      if (compteNum.startsWith('280') || compteNum.startsWith('290')) {
+        amortissements['20'] += montantAmortissement;
+      } else if (compteNum.startsWith('281') || compteNum.startsWith('291')) {
+        amortissements['21'] += montantAmortissement;
+      } else if (compteNum.startsWith('282') || compteNum.startsWith('292')) {
+        amortissements['22'] += montantAmortissement;
+      } else if (compteNum.startsWith('293')) {
+        amortissements['23'] += montantAmortissement;
+      } else if (compteNum.startsWith('296')) {
+        amortissements['26'] += montantAmortissement;
+      } else if (compteNum.startsWith('297')) {
+        amortissements['27'] += montantAmortissement;
+      }
+    });
+
+    return amortissements;
+  }
+
+  /**
+   * ÉTAPE 4 : Affecte chaque compte à l'actif ou au passif
+   * 
+   * RÈGLE SIMPLE :
+   * - Classe 1 : PASSIF (capitaux propres)
+   * - Classe 2 : ACTIF (immobilisations)
+   * - Classe 3 : ACTIF (stocks)
+   * - Classe 4 : DÉCOMPENSATION selon type de compte (voir détails ci-dessous)
+   * - Classe 5 : Selon solde (débiteur→ACTIF, créditeur→PASSIF)
+   * - Classe 28x, 29x : Exclus (déjà traités dans amortissements)
+   * - Classe 6, 7 : Exclus (déjà traités dans résultat)
+   * 
+   * RÈGLE SPÉCIALE CLASSE 4 - DÉCOMPENSATION DES COMPTES DE TIERS :
+   * 
+   * Pour les comptes 401 (Fournisseurs) et 411 (Clients) :
+   * → Gestion PAR COMPTE AUXILIAIRE (pas de compensation entre auxiliaires)
+   * → Chaque compte auxiliaire est affecté selon son propre solde
+   * 
+   * Exemples :
+   * - 401DUPONT avec solde créditeur -1000€ → PASSIF (dette fournisseur)
+   * - 401DUPONT avec solde débiteur +500€ → ACTIF (avance/acompte versé)
+   * - 401MARTIN avec solde créditeur -2000€ → PASSIF (dette fournisseur)
+   * → Total 401 au PASSIF : 3000€ (1000 + 2000)
+   * → Total 401 à l'ACTIF : 500€
+   * → PAS de compensation entre DUPONT et MARTIN
+   * 
+   * - 411CLIENT1 avec solde débiteur +1500€ → ACTIF (créance client)
+   * - 411CLIENT1 avec solde créditeur -200€ → PASSIF (avance/acompte reçu)
+   * - 411CLIENT2 avec solde débiteur +3000€ → ACTIF (créance client)
+   * → Total 411 à l'ACTIF : 4500€ (1500 + 3000)
+   * → Total 411 au PASSIF : 200€
+   * → PAS de compensation entre CLIENT1 et CLIENT2
+   * 
+   * Pour les autres comptes de classe 4 (40x, 42x, 43x, 44x, etc.) :
+   * → Gestion PAR SOLDE GLOBAL de la sous-classe
+   * → Compensation normale des débits et crédits
+   * 
+   * Exemples :
+   * - 437100 (Charges sociales URSSAF) : -5000€ → PASSIF
+   * - 445660 (TVA déductible) : +1200€ → ACTIF
+   * - 445710 (TVA collectée) : -3000€ → PASSIF
+   */
+  static _affecterComptesAuBilan(soldes, amortissements) {
+    const actif = {};
+    const passif = {};
+
+    Object.values(soldes).forEach(compte => {
+      const compteNum = compte.compteNum;
+      const classe = compteNum[0];
       const sousClasse = compteNum.substring(0, 2);
-      
-      // Ignorer si déjà traité
-      if (comptesTraites.has(compteNum)) return;
+      const racineCompte = compteNum.substring(0, 3);
+      const solde = compte.solde;
 
-      const bilanPosition = getBilanPosition(compteNum);
+      // Ignorer les comptes soldés (< 1 centime)
+      if (Math.abs(solde) < 0.01) return;
 
-      if (bilanPosition === 'ACTIF') {
-        compte.solde = compte.totalDebit - compte.totalCredit;
-        if (compte.solde > 0) {
-          BilanGenerator._addToActif(actif, compte, sousClasse);
-        }
-      } else if (bilanPosition === 'PASSIF') {
-        compte.solde = compte.totalCredit - compte.totalDebit;
-        if (compte.solde > 0) {
-          BilanGenerator._addToPassif(passif, compte, sousClasse);
-        }
-      }
-    });
+      // Exclure les comptes déjà traités
+      if (classe === '6' || classe === '7') return; // Résultat
+      if (compteNum.startsWith('28') || compteNum.startsWith('29')) return; // Amortissements
 
-    // Calculer le résultat net de l'exercice (Produits - Charges)
-    let resultatNet = 0;
-    parseResult.data.forEach(row => {
-      const compteNum = row.compteNum || '';
-      const accountType = getAccountType(compteNum);
-      
-      if (accountType === 'COMPTE_RESULTAT') {
-        const resultatPosition = getResultatPosition(compteNum);
-        if (resultatPosition === 'CHARGE') {
-          // Charges : solde débiteur = charge
-          resultatNet -= (row.debit || 0) - (row.credit || 0);
-        } else if (resultatPosition === 'PRODUIT') {
-          // Produits : solde créditeur = produit
-          resultatNet += (row.credit || 0) - (row.debit || 0);
-        }
-      }
-    });
-
-    // Structurer selon la structure officielle du bilan PCG
-    const bilanStructure = BilanGenerator._structureBilan(actif, passif, comptesRegulisation, resultatNet);
-    
-    // Valider le bilan (équilibre ACTIF = PASSIF, non-compensation, etc.)
-    const validation = validerBilan(bilanStructure);
-    bilanStructure.validation = validation;
-    
-    return bilanStructure;
-  }
-
-  /**
-   * Ajoute un compte TVA à l'ACTIF
-   * @private
-   */
-  static _addTVAToActif(actif, montant, detail) {
-    if (!actif.creances) {
-      actif.creances = {};
-    }
-    
-    const key = '4456_actif';
-    if (!actif.creances[key]) {
-      actif.creances[key] = {
-        classe: '4456',
-        libelle: 'TVA déductible',
-        comptes: [],
-        totalDebit: 0,
-        totalCredit: 0,
-        solde: 0,
-        rubrique: 'B - Créances',
-        isDoublePosition: false,
-        isTVA: true
-      };
-    }
-    
-    // Convertir detail en format compatible
-    const comptes = Array.isArray(detail) ? detail.map(d => ({
-      compteNum: d.compte || '',
-      compteLibelle: d.compteLibelle || d.compte || '',
-      debit: d.debit || 0,
-      credit: d.credit || 0,
-      totalDebit: d.debit || 0,
-      totalCredit: d.credit || 0,
-      solde: (d.debit || 0) - (d.credit || 0)
-    })) : [];
-    
-    actif.creances[key].comptes = comptes;
-    actif.creances[key].totalDebit = comptes.reduce((sum, c) => sum + (c.debit || 0), 0);
-    actif.creances[key].totalCredit = comptes.reduce((sum, c) => sum + (c.credit || 0), 0);
-    actif.creances[key].solde = montant;
-  }
-
-  /**
-   * Ajoute un compte TVA au PASSIF
-   * @private
-   */
-  static _addTVAToPassif(passif, montant, compteTVA, detail) {
-    if (!passif.dettes) {
-      passif.dettes = {};
-    }
-    
-    const key = `${compteTVA}_passif`;
-    if (!passif.dettes[key]) {
-      passif.dettes[key] = {
-        classe: compteTVA,
-        libelle: compteTVA === '4455' ? 'TVA à décaisser' : 'TVA collectée',
-        comptes: [],
-        totalDebit: 0,
-        totalCredit: 0,
-        solde: 0,
-        rubrique: 'Dettes fiscales et sociales',
-        isDoublePosition: false,
-        isTVA: true
-      };
-    }
-    
-    // Convertir detail en format compatible
-    const comptes = Array.isArray(detail) ? detail.map(d => ({
-      compteNum: d.compte || '',
-      compteLibelle: d.compteLibelle || d.compte || '',
-      debit: d.debit || 0,
-      credit: d.credit || 0,
-      totalDebit: d.debit || 0,
-      totalCredit: d.credit || 0,
-      solde: (d.credit || 0) - (d.debit || 0)
-    })) : [];
-    
-    passif.dettes[key].comptes = comptes;
-    passif.dettes[key].totalDebit = comptes.reduce((sum, c) => sum + (c.debit || 0), 0);
-    passif.dettes[key].totalCredit = comptes.reduce((sum, c) => sum + (c.credit || 0), 0);
-    passif.dettes[key].solde = montant;
-  }
-
-  /**
-   * Ajoute un compte à l'ACTIF selon sa catégorie
-   * @private
-   */
-  static _addToActif(actif, compte, sousClasse, categorie = null) {
-    const classe = compte.compteNum.substring(0, 1);
-    
-    // Déterminer la catégorie si non spécifiée
-    if (!categorie) {
-      if (classe === '2') {
-        categorie = 'immobilise';
-      } else if (classe === '3') {
-        categorie = 'stocks';
-      } else if (classe === '4') {
-        categorie = 'creances';
-      } else if (classe === '5') {
-        categorie = 'tresorerie';
-      } else {
-        categorie = 'autres';
-      }
-    }
-
-    // Initialiser la catégorie si nécessaire
-    if (!actif[categorie]) {
-      actif[categorie] = {};
-    }
-
-    // Initialiser la sous-classe si nécessaire
-    if (!actif[categorie][sousClasse]) {
-      // Récupérer le libellé depuis le JSON selon la structure officielle
-      let libelle = getAccountLabel(sousClasse) || getAccountLabel(compte.compteNum);
-      
-      // Si le libellé n'est pas trouvé, chercher dans la structure JSON du bilan
-      if (!libelle || libelle === `Compte ${sousClasse}`) {
-        const bilanData = reglesAffectation.bilan;
-        if (bilanData.actif) {
-          // Chercher dans les sections actif
-          for (const sectionKey of Object.keys(bilanData.actif)) {
-            const section = bilanData.actif[sectionKey];
-            if (section.comptes && section.comptes[sousClasse]) {
-              libelle = section.comptes[sousClasse];
-              break;
-            }
-          }
-        }
-      }
-      
-      actif[categorie][sousClasse] = {
-        classe: sousClasse,
-        libelle: libelle || `Classe ${sousClasse}`,
-        comptes: [],
-        totalDebit: 0,
-        totalCredit: 0,
-        solde: 0
-      };
-    }
-
-    // Ajouter le compte
-    actif[categorie][sousClasse].comptes.push(compte);
-    actif[categorie][sousClasse].totalDebit += compte.totalDebit;
-    actif[categorie][sousClasse].totalCredit += compte.totalCredit;
-    actif[categorie][sousClasse].solde += compte.solde;
-  }
-
-  /**
-   * Ajoute un compte à double position à l'ACTIF
-   * Utilise les libellés et rubriques du JSON comptesDoublePosition
-   * @param {Object} actif - Structure actif
-   * @param {String} racine - Racine du compte (ex: '41')
-   * @param {String} libelle - Libellé à afficher
-   * @param {Array} detailComptes - Liste des comptes individuels avec leurs soldes
-   * @param {Number} total - Total des soldes débiteurs
-   * @param {String} rubrique - Rubrique du bilan
-   * @private
-   */
-  static _addDoublePositionToActif(actif, racine, libelle, detailComptes, total, rubrique = 'Créances') {
-    // Déterminer la catégorie selon la rubrique du JSON
-    let categorie = 'creances'; // Par défaut
-    
-    if (rubrique.includes('Trésorerie') || racine === '51') {
-      categorie = 'tresorerie';
-    } else if (rubrique.includes('régularisation') || racine === '48') {
-      categorie = 'regularisation';
-    }
-
-    // Initialiser la catégorie si nécessaire
-    if (!actif[categorie]) {
-      actif[categorie] = {};
-    }
-
-    // Utiliser la racine comme clé, mais avec le libellé du JSON
-    const key = `${racine}_actif`;
-    if (!actif[categorie][key]) {
-      // Convertir detailComptes en format compatible
-      const comptes = Array.isArray(detailComptes) ? detailComptes.map(d => ({
-        compteNum: d.compte || d.compteNum,
-        compteLibelle: d.compteLibelle || d.compte,
-        totalDebit: d.totalDebit || 0,
-        totalCredit: d.totalCredit || 0,
-        solde: d.solde || (d.totalDebit || 0) - (d.totalCredit || 0)
-      })) : [];
-      
-      actif[categorie][key] = {
-        classe: racine,
-        libelle: libelle,
-        comptes: comptes,
-        totalDebit: comptes.reduce((sum, c) => sum + (c.totalDebit || 0), 0),
-        totalCredit: comptes.reduce((sum, c) => sum + (c.totalCredit || 0), 0),
-        solde: total,
-        rubrique: rubrique,
-        isDoublePosition: true
-      };
-    } else {
-      // Fusionner si déjà existant
-      const comptes = Array.isArray(detailComptes) ? detailComptes.map(d => ({
-        compteNum: d.compte || d.compteNum,
-        compteLibelle: d.compteLibelle || d.compte,
-        totalDebit: d.totalDebit || 0,
-        totalCredit: d.totalCredit || 0,
-        solde: d.solde || (d.totalDebit || 0) - (d.totalCredit || 0)
-      })) : [];
-      
-      actif[categorie][key].comptes.push(...comptes);
-      actif[categorie][key].totalDebit += comptes.reduce((sum, c) => sum + (c.totalDebit || 0), 0);
-      actif[categorie][key].totalCredit += comptes.reduce((sum, c) => sum + (c.totalCredit || 0), 0);
-      actif[categorie][key].solde += total;
-    }
-  }
-
-  /**
-   * Ajoute un compte à double position au PASSIF
-   * Utilise les libellés et rubriques du JSON comptesDoublePosition
-   * @param {Object} passif - Structure passif
-   * @param {String} racine - Racine du compte (ex: '41')
-   * @param {String} libelle - Libellé à afficher
-   * @param {Array} detailComptes - Liste des comptes individuels avec leurs soldes
-   * @param {Number} total - Total des soldes créditeurs (en valeur absolue)
-   * @param {String} rubrique - Rubrique du bilan
-   * @private
-   */
-  static _addDoublePositionToPassif(passif, racine, libelle, detailComptes, total, rubrique = 'Dettes') {
-    // Déterminer la catégorie selon la rubrique du JSON
-    let categorie = 'dettes'; // Par défaut
-    
-    if (rubrique.includes('Trésorerie') || rubrique.includes('bancaire') || racine === '51') {
-      categorie = 'tresorerie';
-    } else if (rubrique.includes('régularisation') || racine === '48') {
-      categorie = 'regularisation';
-    } else if (rubrique.includes('social') || racine === '42' || racine === '43') {
-      categorie = 'dettes'; // Dettes sociales
-    } else if (rubrique.includes('fiscal') || racine === '44') {
-      categorie = 'dettes'; // Dettes fiscales
-    }
-
-    // Initialiser la catégorie si nécessaire
-    if (!passif[categorie]) {
-      passif[categorie] = {};
-    }
-
-    // Utiliser la racine comme clé, mais avec le libellé du JSON
-    const key = `${racine}_passif`;
-    if (!passif[categorie][key]) {
-      // Convertir detailComptes en format compatible
-      const comptes = Array.isArray(detailComptes) ? detailComptes.map(d => ({
-        compteNum: d.compte || d.compteNum,
-        compteLibelle: d.compteLibelle || d.compte,
-        totalDebit: d.totalDebit || 0,
-        totalCredit: d.totalCredit || 0,
-        solde: d.soldeAbsolu || Math.abs(d.solde) || (d.totalCredit || 0) - (d.totalDebit || 0)
-      })) : [];
-      
-      passif[categorie][key] = {
-        classe: racine,
-        libelle: libelle,
-        comptes: comptes,
-        totalDebit: comptes.reduce((sum, c) => sum + (c.totalDebit || 0), 0),
-        totalCredit: comptes.reduce((sum, c) => sum + (c.totalCredit || 0), 0),
-        solde: total,
-        rubrique: rubrique,
-        isDoublePosition: true
-      };
-    } else {
-      // Fusionner si déjà existant
-      const comptes = Array.isArray(detailComptes) ? detailComptes.map(d => ({
-        compteNum: d.compte || d.compteNum,
-        compteLibelle: d.compteLibelle || d.compte,
-        totalDebit: d.totalDebit || 0,
-        totalCredit: d.totalCredit || 0,
-        solde: d.soldeAbsolu || Math.abs(d.solde) || (d.totalCredit || 0) - (d.totalDebit || 0)
-      })) : [];
-      
-      passif[categorie][key].comptes.push(...comptes);
-      passif[categorie][key].totalDebit += comptes.reduce((sum, c) => sum + (c.totalDebit || 0), 0);
-      passif[categorie][key].totalCredit += comptes.reduce((sum, c) => sum + (c.totalCredit || 0), 0);
-      passif[categorie][key].solde += total;
-    }
-  }
-
-  /**
-   * Ajoute un compte au PASSIF selon sa catégorie
-   * @private
-   */
-  static _addToPassif(passif, compte, sousClasse, categorie = null) {
-    const classe = compte.compteNum.substring(0, 1);
-    
-    // Déterminer la catégorie si non spécifiée
-    if (!categorie) {
+      // AFFECTATION PAR CLASSE
       if (classe === '1') {
-        if (sousClasse === '15') {
-          categorie = 'provisions';
-        } else if (sousClasse === '16' || sousClasse === '17') {
-          // Emprunts et dettes assimilées (16, 17) = dettes
-          categorie = 'dettes';
-        } else {
-          categorie = 'capitauxPropres';
+        // Classe 1 : Toujours PASSIF (capitaux propres)
+        this._ajouterAuGroupe(passif, sousClasse, compte, Math.abs(solde), 'passif');
+        
+      } else if (classe === '2') {
+        // Classe 2 : Toujours ACTIF (immobilisations)
+        // Valeur brute = solde débiteur
+        if (solde > 0) {
+          this._ajouterAuGroupe(actif, sousClasse, compte, solde, 'actif');
         }
+        
+      } else if (classe === '3') {
+        // Classe 3 : Toujours ACTIF (stocks)
+        if (solde > 0) {
+          this._ajouterAuGroupe(actif, sousClasse, compte, solde, 'actif');
+        }
+        
       } else if (classe === '4') {
-        categorie = 'dettes';
-      } else if (classe === '5') {
-        categorie = 'tresorerie';
-      } else {
-        categorie = 'autres';
-      }
-    }
-
-    // Initialiser la catégorie si nécessaire
-    if (!passif[categorie]) {
-      passif[categorie] = {};
-    }
-
-    // Initialiser la sous-classe si nécessaire
-    if (!passif[categorie][sousClasse]) {
-      // Récupérer le libellé depuis le JSON selon la structure officielle
-      let libelle = getAccountLabel(sousClasse) || getAccountLabel(compte.compteNum);
-      
-      // Si le libellé n'est pas trouvé, chercher dans la structure JSON du bilan
-      if (!libelle || libelle === `Compte ${sousClasse}`) {
-        const bilanData = reglesAffectation.bilan;
-        if (bilanData.passif) {
-          // Chercher dans les sections passif
-          for (const sectionKey of Object.keys(bilanData.passif)) {
-            const section = bilanData.passif[sectionKey];
-            if (section.comptes && section.comptes[sousClasse]) {
-              libelle = section.comptes[sousClasse];
-              break;
-            }
+        // Classe 4 : DÉCOMPENSATION selon type de compte
+        
+        // CAS SPÉCIAL : Comptes 401 (Fournisseurs) et 411 (Clients)
+        // → Gestion PAR COMPTE AUXILIAIRE sans compensation
+        if (racineCompte === '401' || racineCompte === '411') {
+          // Chaque compte auxiliaire est affecté selon son propre solde
+          if (solde > 0) {
+            // Solde débiteur
+            // 401 débiteur → ACTIF (avances/acomptes versés aux fournisseurs)
+            // 411 débiteur → ACTIF (créances clients)
+            this._ajouterAuGroupe(actif, sousClasse, compte, solde, 'actif');
+          } else if (solde < 0) {
+            // Solde créditeur
+            // 401 créditeur → PASSIF (dettes fournisseurs)
+            // 411 créditeur → PASSIF (avances/acomptes reçus des clients)
+            this._ajouterAuGroupe(passif, sousClasse, compte, Math.abs(solde), 'passif');
+          }
+        } else {
+          // AUTRES COMPTES DE CLASSE 4 : Gestion par solde global
+          // Compensation normale (un seul solde par sous-classe)
+          if (solde > 0) {
+            // Solde débiteur → ACTIF (créances diverses, TVA déductible, etc.)
+            this._ajouterAuGroupe(actif, sousClasse, compte, solde, 'actif');
+          } else if (solde < 0) {
+            // Solde créditeur → PASSIF (dettes fiscales, sociales, TVA collectée, etc.)
+            this._ajouterAuGroupe(passif, sousClasse, compte, Math.abs(solde), 'passif');
           }
         }
+        
+      } else if (classe === '5') {
+        // Classe 5 : Selon le solde (banques, caisse, etc.)
+        if (solde > 0) {
+          // Solde débiteur → ACTIF (trésorerie active)
+          this._ajouterAuGroupe(actif, sousClasse, compte, solde, 'actif');
+        } else if (solde < 0) {
+          // Solde créditeur → PASSIF (découverts bancaires)
+          this._ajouterAuGroupe(passif, sousClasse, compte, Math.abs(solde), 'passif');
+        }
       }
-      
-      passif[categorie][sousClasse] = {
-        classe: sousClasse,
-        libelle: libelle || `Classe ${sousClasse}`,
-        comptes: [],
-        totalDebit: 0,
-        totalCredit: 0,
-        solde: 0
-      };
-    }
+    });
 
-    // Ajouter le compte
-    passif[categorie][sousClasse].comptes.push(compte);
-    passif[categorie][sousClasse].totalDebit += compte.totalDebit;
-    passif[categorie][sousClasse].totalCredit += compte.totalCredit;
-    passif[categorie][sousClasse].solde += compte.solde;
+    // Appliquer les amortissements aux immobilisations (totaux par sous-classe)
+    this._appliquerAmortissements(actif, amortissements);
+
+    // Enrichir chaque compte d'immobilisation avec ses amortissements individuels
+    this._enrichirImmobilisationsAvecAmortissements(actif, soldes);
+
+    return { actif, passif };
   }
 
   /**
-   * Structure le bilan selon la structure officielle du PCG
-   * @private
+   * Ajoute un compte à un groupe (regroupement par sous-classe = 2 chiffres)
    */
-  static _structureBilan(actif, passif, comptesRegulisation, resultatNet) {
-    // Structurer l'ACTIF
-    const actifImmobilise = BilanGenerator._flattenCategories(actif.immobilise || {});
-    const stocks = BilanGenerator._flattenCategories(actif.stocks || {});
-    const creances = BilanGenerator._flattenCategories(actif.creances || {});
-    const tresorerie = BilanGenerator._flattenCategories(actif.tresorerie || {});
-    const regularisationActif = BilanGenerator._flattenCategories(actif.regularisation || {});
-
-    // Calculer les sous-totaux ACTIF
-    const totalActifImmobilise = BilanGenerator._calculateTotal(actifImmobilise);
-    const totalStocks = BilanGenerator._calculateTotal(stocks);
-    const totalCreances = BilanGenerator._calculateTotal(creances);
-    const totalTresorerie = BilanGenerator._calculateTotal(tresorerie);
-    const totalRegularisationActif = BilanGenerator._calculateTotal(regularisationActif);
-    const totalActifCirculant = totalStocks + totalCreances + totalTresorerie;
-    const totalActif = totalActifImmobilise + totalActifCirculant + totalRegularisationActif;
-
-    // Structurer le PASSIF selon la structure officielle du PCG
-    const capitauxPropres = BilanGenerator._flattenCategories(passif.capitauxPropres || {});
-    const provisions = BilanGenerator._flattenCategories(passif.provisions || {});
-    
-    // Séparer les dettes classe 4 des dettes financières (16, 17)
-    const toutesDettes = BilanGenerator._flattenCategories(passif.dettes || {});
-    const dettes = toutesDettes.filter(item => !item.classe.startsWith('16') && !item.classe.startsWith('17'));
-    const dettesFinancieresLT = toutesDettes.filter(item => item.classe.startsWith('16') || item.classe.startsWith('17'));
-    
-    const tresoreriePassif = BilanGenerator._flattenCategories(passif.tresorerie || {});
-    const regularisationPassif = BilanGenerator._flattenCategories(passif.regularisation || {});
-
-    // Ajouter le résultat net aux capitaux propres (compte 12)
-    // Utiliser le libellé du JSON
-    const libelleResultat = getAccountLabel('12') || 
-                           (reglesAffectation.bilan?.passif?.classe1?.comptes?.['12']) ||
-                           'Résultat de l\'exercice';
-    
-    let resultatExiste = capitauxPropres.find(item => item.classe === '12');
-    if (!resultatExiste && resultatNet !== 0) {
-      capitauxPropres.push({
-        classe: '12',
-        libelle: libelleResultat,
+  static _ajouterAuGroupe(structure, sousClasse, compte, montant, type = 'actif') {
+    if (!structure[sousClasse]) {
+      structure[sousClasse] = {
+        sousClasse,
+        libelle: getAccountLabel(sousClasse) || `Classe ${sousClasse}`,
         comptes: [],
-        totalDebit: 0,
-        totalCredit: 0,
-        solde: resultatNet
-      });
-      capitauxPropres.sort((a, b) => a.classe.localeCompare(b.classe));
-    } else if (resultatExiste) {
-      resultatExiste.solde += resultatNet;
+        brut: 0,
+        amortissements: 0,
+        net: 0
+      };
     }
 
-    // Calculer les sous-totaux PASSIF selon la structure PCG
-    const totalCapitauxPropres = BilanGenerator._calculateTotal(capitauxPropres);
-    const totalProvisions = BilanGenerator._calculateTotal(provisions);
-    
-    // Calculer toutes les dettes (classe 4 + 16/17 + trésorerie passif)
-    const totalDettes = BilanGenerator._calculateTotal(dettes);
-    const totalDettesFinancieresLT = BilanGenerator._calculateTotal(dettesFinancieresLT);
-    const totalTresoreriePassif = BilanGenerator._calculateTotal(tresoreriePassif);
-    const totalRegularisationPassif = BilanGenerator._calculateTotal(regularisationPassif);
-    const totalPassif = totalCapitauxPropres + totalProvisions + totalDettes + 
-                       totalDettesFinancieresLT + totalTresoreriePassif + totalRegularisationPassif;
+    // Conserver toutes les informations du compte original
+    structure[sousClasse].comptes.push({
+      compteNum: compte.compteNum,
+      compteLibelle: compte.compteLibelle,
+      totalDebit: compte.debit || 0,
+      totalCredit: compte.credit || 0,
+      solde: compte.solde || 0,
+      montant: montant,
+      type: type  // 'actif' ou 'passif'
+    });
+
+    structure[sousClasse].brut += montant;
+    structure[sousClasse].net += montant;
+  }
+
+  /**
+   * Applique les amortissements aux immobilisations
+   * ET calcule les amortissements pour chaque compte individuel
+   */
+  static _appliquerAmortissements(actif, amortissements) {
+    Object.keys(amortissements).forEach(sousClasse => {
+      if (actif[sousClasse] && amortissements[sousClasse] > 0) {
+        actif[sousClasse].amortissements = amortissements[sousClasse];
+        actif[sousClasse].net = actif[sousClasse].brut - amortissements[sousClasse];
+      }
+    });
+  }
+
+  /**
+   * Calcule les amortissements détaillés pour chaque compte d'immobilisation
+   * Retourne un objet { compteNum: montantAmortissement }
+   */
+  static _calculerAmortissementsDetailles(soldesComptes) {
+    const amortissementsParCompte = {};
+
+    // Parcourir tous les comptes d'amortissements
+    Object.values(soldesComptes).forEach(compte => {
+      const compteNum = compte.compteNum || '';
+      
+      // Les comptes d'amortissements commencent par 28 ou 29
+      if (!compteNum.startsWith('28') && !compteNum.startsWith('29')) return;
+
+      // Le montant d'amortissement = solde créditeur
+      const montantAmortissement = Math.max(0, compte.credit - compte.debit);
+      if (montantAmortissement < 0.01) return;
+
+      // Extraire le suffixe pour identifier le compte d'immobilisation correspondant
+      // Ex: 28051000 → cherche 20510000
+      // Pattern: 28xyz → 2xyz (en rajoutant un 0 à la fin si nécessaire)
+      
+      const prefixe = compteNum.substring(0, 2); // "28" ou "29"
+      const suffixe = compteNum.substring(2);    // "051000"
+      
+      // Mapping des préfixes d'amortissements vers les classes d'immobilisations
+      const classeMappings = {
+        '280': '20', '290': '20',  // Immobilisations incorporelles
+        '281': '21', '291': '21',  // Constructions
+        '282': '22', '292': '22',  // Installations techniques
+        '283': '23', '293': '23',  // Immobilisations en cours
+        '296': '26',               // Participations
+        '297': '27'                // Autres immobilisations financières
+      };
+
+      const prefixeComplet = compteNum.substring(0, 3); // "280", "281", etc.
+      const classeImmob = classeMappings[prefixeComplet];
+      
+      if (!classeImmob) return;
+
+      // Construire le numéro de compte d'immobilisation attendu
+      // Ex: 28051000 → 20510000
+      const compteImmobAttendu = classeImmob + suffixe + '0';
+      
+      // Ajouter l'amortissement pour ce compte
+      if (!amortissementsParCompte[compteImmobAttendu]) {
+        amortissementsParCompte[compteImmobAttendu] = 0;
+      }
+      amortissementsParCompte[compteImmobAttendu] += montantAmortissement;
+    });
+
+    return amortissementsParCompte;
+  }
+
+  /**
+   * Enrichit les comptes d'immobilisations avec leurs amortissements individuels
+   */
+  static _enrichirImmobilisationsAvecAmortissements(actif, soldesComptes) {
+    // Calculer les amortissements détaillés
+    const amortissementsParCompte = this._calculerAmortissementsDetailles(soldesComptes);
+
+    // Parcourir les immobilisations (classes 20-27)
+    ['20', '21', '22', '23', '26', '27'].forEach(sousClasse => {
+      if (!actif[sousClasse] || !actif[sousClasse].comptes) return;
+
+      // Enrichir chaque compte avec ses amortissements
+      actif[sousClasse].comptes = actif[sousClasse].comptes.map(compte => {
+        const compteNum = compte.compteNum || '';
+        const brut = compte.montant || 0;
+        const amortissements = amortissementsParCompte[compteNum] || 0;
+        const net = brut - amortissements;
+        const vetuste = brut > 0 ? Math.min(100, (amortissements / brut) * 100) : 0;
+
+        return {
+          ...compte,
+          brut,
+          amortissements,
+          net,
+          vetuste
+        };
+      });
+    });
+  }
+
+  /**
+   * ÉTAPE 5 : Ajoute le résultat au passif (compte 12)
+   */
+  static _ajouterResultatAuPassif(passif, resultat) {
+    const sousClasse = '12';
+
+    if (!passif[sousClasse]) {
+      passif[sousClasse] = {
+        sousClasse,
+        libelle: 'Résultat de l\'exercice',
+        comptes: [],
+        brut: 0,
+        amortissements: 0,
+        net: 0
+      };
+    }
+
+    passif[sousClasse].comptes.push({
+      compteNum: '12',
+      compteLibelle: resultat >= 0 ? 'Résultat de l\'exercice (bénéfice)' : 'Résultat de l\'exercice (perte)',
+      totalDebit: 0,
+      totalCredit: 0,
+      solde: resultat,
+      montant: resultat,
+      type: 'passif'
+    });
+
+    passif[sousClasse].brut = resultat;
+    passif[sousClasse].net = resultat;
+  }
+
+  /**
+   * ÉTAPE 6 : Structure le bilan selon le format PCG
+   */
+  static _structurerBilan(actifBrut, passifBrut) {
+    // Extraire et organiser l'actif
+    const immobilisations = this._extraireParClasses(actifBrut, ['20', '21', '22', '23', '26', '27']);
+    const stocks = this._extraireParClasses(actifBrut, ['31', '32', '33', '34', '35', '37']);
+    const creances = this._extraireParClasses(actifBrut, ['40', '41', '42', '43', '44', '45', '46', '47', '48']);
+    const tresorerieActif = this._extraireParClasses(actifBrut, ['50', '51', '53', '54']);
+
+    // Extraire et organiser le passif
+    const capitauxPropres = this._extraireParClasses(passifBrut, ['10', '11', '12', '13', '14']);
+    const provisions = this._extraireParClasses(passifBrut, ['15']);
+    const dettesLongTerme = this._extraireParClasses(passifBrut, ['16', '17']);
+    const dettesCourtTerme = this._extraireParClasses(passifBrut, ['40', '41', '42', '43', '44', '45', '46', '47', '48']);
+    const tresoreriePassif = this._extraireParClasses(passifBrut, ['51', '52']);
+
+    // Calculer les totaux
+    const totalImmobilisations = this._calculerTotal(immobilisations);
+    const totalStocks = this._calculerTotal(stocks);
+    const totalCreances = this._calculerTotal(creances);
+    const totalTresorerieActif = this._calculerTotal(tresorerieActif);
+    const totalActifCirculant = totalStocks + totalCreances + totalTresorerieActif;
+    const totalActif = totalImmobilisations + totalActifCirculant;
+
+    const totalCapitauxPropres = this._calculerTotal(capitauxPropres);
+    const totalProvisions = this._calculerTotal(provisions);
+    const totalDettesLongTerme = this._calculerTotal(dettesLongTerme);
+    const totalDettesCourtTerme = this._calculerTotal(dettesCourtTerme);
+    const totalTresoreriePassif = this._calculerTotal(tresoreriePassif);
+    const totalPassifCirculant = totalDettesCourtTerme + totalTresoreriePassif;
+    const totalPassif = totalCapitauxPropres + totalProvisions + totalDettesLongTerme + totalPassifCirculant;
 
     return {
       actif: {
-        immobilise: actifImmobilise,
+        immobilise: immobilisations,
         circulant: {
-          stocks: stocks,
-          creances: creances,
-          tresorerie: tresorerie
+          stocks,
+          creances,
+          tresorerie: tresorerieActif
         },
-        regularisation: regularisationActif,
-        totalImmobilise: totalActifImmobilise,
-        totalStocks: totalStocks,
-        totalCreances: totalCreances,
-        totalTresorerie: totalTresorerie,
+        totalImmobilise: totalImmobilisations,
+        totalStocks,
+        totalCreances,
+        totalTresorerie: totalTresorerieActif,
         totalCirculant: totalActifCirculant,
-        totalRegularisation: totalRegularisationActif,
         total: totalActif
       },
       passif: {
-        capitauxPropres: capitauxPropres,
-        provisions: provisions,
-        dettes: dettes,
-        dettesFinancieres: dettesFinancieresLT,
+        capitauxPropres,
+        provisions,
+        dettesLongTerme,
+        dettesCourtTerme,
         tresorerie: tresoreriePassif,
-        regularisation: regularisationPassif,
-        totalCapitauxPropres: totalCapitauxPropres,
-        totalProvisions: totalProvisions,
-        totalDettes: totalDettes,
-        totalDettesFinancieres: totalDettesFinancieresLT,
+        totalCapitauxPropres,
+        totalProvisions,
+        totalDettesLongTerme,
+        totalDettesCourtTerme,
         totalTresorerie: totalTresoreriePassif,
-        totalRegularisation: totalRegularisationPassif,
+        totalPassifCirculant,
         total: totalPassif
       },
       equilibre: {
@@ -743,24 +499,61 @@ export class BilanGenerator {
   }
 
   /**
-   * Aplatit les catégories en liste triée
-   * @private
+   * Extrait les éléments d'une liste de sous-classes
    */
-  static _flattenCategories(categories) {
-    return Object.values(categories).sort((a, b) => 
-      a.classe.localeCompare(b.classe)
-    );
+  static _extraireParClasses(structure, sousClasses) {
+    return Object.values(structure)
+      .filter(item => sousClasses.includes(item.sousClasse))
+      .sort((a, b) => a.sousClasse.localeCompare(b.sousClasse))
+      .map(item => ({
+        classe: item.sousClasse,
+        libelle: item.libelle,
+        brut: item.brut || 0,
+        amortissements: item.amortissements || 0,
+        net: item.net || 0,
+        comptes: item.comptes || []
+      }));
   }
 
   /**
-   * Calcule le total d'une liste de sous-classes
-   * @private
+   * Calcule le total d'une catégorie
    */
-  static _calculateTotal(items) {
-    return items.reduce((sum, item) => sum + (item.solde || 0), 0);
+  static _calculerTotal(items) {
+    return items.reduce((sum, item) => sum + (item.net || 0), 0);
+  }
+
+  /**
+   * ÉTAPE 7 : Valide l'équilibre du bilan
+   */
+  static _validerBilan(bilan) {
+    const errors = [];
+    const warnings = [];
+
+    const totalActif = bilan.actif.total;
+    const totalPassif = bilan.passif.total;
+    const ecart = Math.abs(totalActif - totalPassif);
+
+    // Vérifier l'équilibre
+    if (ecart > 0.01) {
+      errors.push(
+        `Bilan non équilibré : Actif = ${totalActif.toFixed(2)}€, ` +
+        `Passif = ${totalPassif.toFixed(2)}€, Écart = ${ecart.toFixed(2)}€`
+      );
+    }
+
+    // Avertissements si passif négatif (perte)
+    if (totalPassif < 0) {
+      warnings.push('Capitaux propres négatifs : situation financière critique');
+    }
+
+    return {
+      isValid: errors.length === 0,
+      errors,
+      warnings,
+      equilibre: ecart <= 0.01
+    };
   }
 }
 
-// Export de la fonction principale pour compatibilité
+// Export de la fonction principale
 export const generateBilan = (parseResult) => BilanGenerator.generateBilan(parseResult);
-

@@ -263,13 +263,14 @@ const CompteResultatView = ({
                     : null;
 
                   return (
-                    <tr key={idx} className="border-t border-gray-200 hover:bg-gray-50">
+                    <tr 
+                      key={idx} 
+                      className="border-t border-gray-200 hover:bg-gray-50 cursor-pointer"
+                      onClick={() => setSelectedClasse(selectedClasse?.type === type && selectedClasse?.classe === item.classe ? null : { type, classe: item.classe })}
+                      title="Cliquez pour voir le détail des comptes"
+                    >
                       <td className="px-2 py-1 font-mono text-xs">{item.classe}</td>
-                      <td 
-                        className="px-2 py-1 cursor-pointer hover:text-indigo-600 hover:underline transition-colors text-xs"
-                        onClick={() => setSelectedClasse(selectedClasse?.type === type && selectedClasse?.classe === item.classe ? null : { type, classe: item.classe })}
-                        title="Cliquez pour voir le détail"
-                      >
+                      <td className="px-2 py-1 hover:text-indigo-600 transition-colors text-xs">
                         {item.libelle}
                       </td>
                       {showResultatN && (

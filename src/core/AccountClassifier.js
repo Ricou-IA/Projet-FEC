@@ -1,4 +1,5 @@
 import reglesAffectation from '../data/regles-affectation-comptes.json';
+import reglesAffectationBilan from '../data/regles-affectation-bilan.json';
 
 /**
  * Classificateur de comptes selon le Plan Comptable Général (PCG) 2025
@@ -7,6 +8,7 @@ import reglesAffectation from '../data/regles-affectation-comptes.json';
 class AccountClassifier {
   constructor() {
     this.rules = reglesAffectation;
+    this.rulesBilan = reglesAffectationBilan; // Règles spécifiques au bilan
     this.cache = new Map(); // Cache pour optimiser les recherches
   }
 
@@ -177,6 +179,31 @@ class AccountClassifier {
 
     // Classe 4 = Comptes de tiers (à déterminer selon le compte)
     if (classe === '4') {
+      // D'abord, vérifier dans rulesBilan pour une position explicite
+      if (this.rulesBilan && this.rulesBilan.libellesComptes && this.rulesBilan.libellesComptes.classe4) {
+        // Chercher le compte exact
+        const compteInfo = this.rulesBilan.libellesComptes.classe4[normalized];
+        if (compteInfo && compteInfo.position) {
+          const position = compteInfo.position === 'actif' ? 'ACTIF' : 
+                          compteInfo.position === 'passif' ? 'PASSIF' : null;
+          if (position) {
+            this.cache.set(cacheKey, position);
+            return position;
+          }
+        }
+        
+        // Si pas trouvé, chercher par sous-classe (ex: 41, 40, 42, etc.)
+        const compteInfoSousClasse = this.rulesBilan.libellesComptes.classe4[sousClasse];
+        if (compteInfoSousClasse && compteInfoSousClasse.position) {
+          const position = compteInfoSousClasse.position === 'actif' ? 'ACTIF' : 
+                          compteInfoSousClasse.position === 'passif' ? 'PASSIF' : null;
+          if (position) {
+            this.cache.set(cacheKey, position);
+            return position;
+          }
+        }
+      }
+      
       // Vérifier les règles spéciales de régularisation
       if (this.isRegularisationAccount(normalized)) {
         // Charges constatées d'avance = ACTIF
@@ -210,8 +237,8 @@ class AccountClassifier {
         }
       }
 
-      // Vérifier dans les données structurées du JSON
-      if (bilanData.actif.classe4_actif) {
+      // Vérifier dans les données structurées du JSON (si disponible)
+      if (bilanData && bilanData.actif && bilanData.actif.classe4_actif) {
         const label = this.findAccountInObject(bilanData.actif.classe4_actif.comptes, normalized);
         if (label) {
           this.cache.set(cacheKey, 'ACTIF');
@@ -219,7 +246,7 @@ class AccountClassifier {
         }
       }
       
-      if (bilanData.passif.classe4_passif) {
+      if (bilanData && bilanData.passif && bilanData.passif.classe4_passif) {
         const label = this.findAccountInObject(bilanData.passif.classe4_passif.comptes, normalized);
         if (label) {
           this.cache.set(cacheKey, 'PASSIF');
@@ -245,10 +272,36 @@ class AccountClassifier {
       }
     }
 
-    // Classe 5 = Trésorerie (peut être ACTIF ou PASSIF selon le solde)
-    // Par défaut, considérer comme ACTIF (trésorerie active)
+    // Classe 5 = Trésorerie (peut être ACTIF ou PASSIF selon le compte)
+    // Utiliser rulesBilan pour déterminer la position exacte
     if (classe === '5') {
-      if (bilanData.actif.classe5_actif) {
+      // D'abord, vérifier dans rulesBilan pour une position explicite
+      if (this.rulesBilan && this.rulesBilan.libellesComptes && this.rulesBilan.libellesComptes.classe5) {
+        // Chercher le compte exact (ex: 519, 512, etc.)
+        const compteInfo = this.rulesBilan.libellesComptes.classe5[normalized];
+        if (compteInfo && compteInfo.position) {
+          const position = compteInfo.position === 'actif' ? 'ACTIF' : 
+                          compteInfo.position === 'passif' ? 'PASSIF' : null;
+          if (position) {
+            this.cache.set(cacheKey, position);
+            return position;
+          }
+        }
+        
+        // Si pas trouvé, chercher par sous-classe (ex: 51, 53, 54)
+        const compteInfoSousClasse = this.rulesBilan.libellesComptes.classe5[sousClasse];
+        if (compteInfoSousClasse && compteInfoSousClasse.position) {
+          const position = compteInfoSousClasse.position === 'actif' ? 'ACTIF' : 
+                          compteInfoSousClasse.position === 'passif' ? 'PASSIF' : null;
+          if (position) {
+            this.cache.set(cacheKey, position);
+            return position;
+          }
+        }
+      }
+      
+      // Vérifier dans les données structurées du JSON (si disponible) - ancienne méthode
+      if (bilanData && bilanData.actif && bilanData.actif.classe5_actif) {
         const label = this.findAccountInObject(bilanData.actif.classe5_actif.comptes, normalized);
         if (label) {
           this.cache.set(cacheKey, 'ACTIF');
@@ -256,7 +309,7 @@ class AccountClassifier {
         }
       }
       
-      if (bilanData.passif.classe5_passif) {
+      if (bilanData && bilanData.passif && bilanData.passif.classe5_passif) {
         const label = this.findAccountInObject(bilanData.passif.classe5_passif.comptes, normalized);
         if (label) {
           this.cache.set(cacheKey, 'PASSIF');
@@ -264,7 +317,12 @@ class AccountClassifier {
         }
       }
       
-      // Par défaut ACTIF pour trésorerie
+      // Par défaut ACTIF pour trésorerie (sauf 519 qui est au passif)
+      if (normalized.startsWith('519')) {
+        this.cache.set(cacheKey, 'PASSIF');
+        return 'PASSIF';
+      }
+      
       this.cache.set(cacheKey, 'ACTIF');
       return 'ACTIF';
     }
@@ -331,28 +389,63 @@ class AccountClassifier {
 
     // Rechercher dans le BILAN
     if (['1', '2', '3', '4', '5'].includes(classe)) {
+      // D'abord, chercher dans les libellés du fichier regles-affectation-bilan
+      if (this.rulesBilan && this.rulesBilan.libellesComptes) {
+        const classeKey = `classe${classe}`;
+        const libellesClasse = this.rulesBilan.libellesComptes[classeKey];
+        
+        if (libellesClasse) {
+          // Recherche exacte du compte
+          if (libellesClasse[normalized]) {
+            const compteInfo = libellesClasse[normalized];
+            const label = typeof compteInfo === 'string' ? compteInfo : compteInfo.libelle;
+            if (label) {
+              this.cache.set(cacheKey, label);
+              return label;
+            }
+          }
+          
+          // Recherche par sous-classe (2 premiers chiffres)
+          if (libellesClasse[sousClasse]) {
+            const compteInfo = libellesClasse[sousClasse];
+            const label = typeof compteInfo === 'string' ? compteInfo : compteInfo.libelle;
+            if (label) {
+              this.cache.set(cacheKey, label);
+              return label;
+            }
+          }
+        }
+      }
+      
+      // Ensuite, chercher dans la structure bilan (si disponible)
       const bilanData = this.rules.bilan;
       
-      // Rechercher dans ACTIF
-      for (const key of Object.keys(bilanData.actif)) {
-        const section = bilanData.actif[key];
-        if (section.comptes) {
-          const label = this.findAccountInObject(section.comptes, normalized);
-          if (label) {
-            this.cache.set(cacheKey, label);
-            return label;
+      // Vérifier que bilanData existe avant d'accéder à ses propriétés
+      if (bilanData && bilanData.actif) {
+        // Rechercher dans ACTIF
+        for (const key of Object.keys(bilanData.actif)) {
+          const section = bilanData.actif[key];
+          if (section && section.comptes) {
+            const label = this.findAccountInObject(section.comptes, normalized);
+            if (label) {
+              this.cache.set(cacheKey, label);
+              return label;
+            }
           }
         }
       }
 
-      // Rechercher dans PASSIF
-      for (const key of Object.keys(bilanData.passif)) {
-        const section = bilanData.passif[key];
-        if (section.comptes) {
-          const label = this.findAccountInObject(section.comptes, normalized);
-          if (label) {
-            this.cache.set(cacheKey, label);
-            return label;
+      // Vérifier que bilanData existe avant d'accéder à ses propriétés
+      if (bilanData && bilanData.passif) {
+        // Rechercher dans PASSIF
+        for (const key of Object.keys(bilanData.passif)) {
+          const section = bilanData.passif[key];
+          if (section && section.comptes) {
+            const label = this.findAccountInObject(section.comptes, normalized);
+            if (label) {
+              this.cache.set(cacheKey, label);
+              return label;
+            }
           }
         }
       }
@@ -535,6 +628,67 @@ class AccountClassifier {
   }
 
   /**
+   * Vérifie si un compte a une position fixe définie dans le JSON (non double position)
+   * Certains comptes comme 519 (Concours bancaires) ont une position fixe au passif
+   * @param {string|number} compteNum - Numéro de compte
+   * @returns {Object|null} {position: 'ACTIF'|'PASSIF', libelle: string, categorie: string} ou null si pas de position fixe
+   */
+  getFixedPosition(compteNum) {
+    const normalized = this.normalizeAccount(compteNum);
+    if (!normalized) return null;
+
+    const cacheKey = `fixedPosition_${normalized}`;
+    if (this.cache.has(cacheKey)) {
+      return this.cache.get(cacheKey);
+    }
+
+    // Chercher dans regles-affectation-bilan.json
+    if (this.rulesBilan && this.rulesBilan.libellesComptes) {
+      const classe = normalized.substring(0, 1);
+      const classeKey = `classe${classe}`;
+      const libellesClasse = this.rulesBilan.libellesComptes[classeKey];
+      
+      if (libellesClasse) {
+        // Chercher le compte exact (ex: "51970000")
+        let compteInfo = libellesClasse[normalized];
+        
+        // Si pas trouvé, chercher par préfixes de longueur décroissante (519, 51, 5)
+        // pour gérer les sous-comptes comme 51970000 qui doivent hériter de la position de 519
+        if (!compteInfo) {
+          // Chercher par préfixes de 3 chiffres (519, 418, etc.)
+          if (normalized.length >= 3) {
+            const prefix3 = normalized.substring(0, 3);
+            compteInfo = libellesClasse[prefix3];
+          }
+          
+          // Si pas trouvé, chercher par sous-classe (2 premiers chiffres : 51, 41, etc.)
+          if (!compteInfo && normalized.length >= 2) {
+            const sousClasse = normalized.substring(0, 2);
+            compteInfo = libellesClasse[sousClasse];
+          }
+        }
+        
+        if (compteInfo) {
+          const position = compteInfo.position;
+          // Si position est 'actif' ou 'passif' (pas 'mixte'), c'est une position fixe
+          if (position === 'actif' || position === 'passif') {
+            const result = {
+              position: position.toUpperCase(),
+              libelle: typeof compteInfo === 'string' ? compteInfo : compteInfo.libelle,
+              categorie: compteInfo.categorie || 'dettes'
+            };
+            this.cache.set(cacheKey, result);
+            return result;
+          }
+        }
+      }
+    }
+
+    this.cache.set(cacheKey, null);
+    return null;
+  }
+
+  /**
    * Vide le cache (utile pour forcer un rechargement)
    */
   clearCache() {
@@ -555,6 +709,7 @@ export const isRegularisationAccount = (compteNum) => accountClassifier.isRegula
 export const isTVAAccount = (compteNum) => accountClassifier.isTVAAccount(compteNum);
 export const isDoublePositionAccount = (compteNum) => accountClassifier.isDoublePositionAccount(compteNum);
 export const getDoublePositionInfo = (compteNum) => accountClassifier.getDoublePositionInfo(compteNum);
+export const getFixedPosition = (compteNum) => accountClassifier.getFixedPosition(compteNum);
 
 // Export de la classe également
 export default accountClassifier;

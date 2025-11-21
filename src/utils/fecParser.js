@@ -40,6 +40,8 @@ export function parseFecFile(fileContent, exerciceLabel = '') {
         ecritureDate: values[3],
         compteNum: values[4],
         compteLibelle: values[5],
+        compteAuxNum: values[6] || '', // Compte auxiliaire numéro (vide si pas d'auxiliaire)
+        compteAuxLibelle: values[7] || '', // Libellé du compte auxiliaire
         pieceRef: values[8],
         ecritureLibelle: values[10],
         debit: debit,

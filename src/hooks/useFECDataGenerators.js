@@ -15,18 +15,12 @@ export const useFECDataGenerators = (parseResult1, parseResult2, cyclesResult2) 
       try {
         const resultat = ResultatGenerator.generateCompteResultat(result);
         
-        console.log('useFECDataGenerators - resultat brut:', resultat);
-        
         if (!resultat) {
-          console.warn('ResultatGenerator.generateCompteResultat a retourné null');
           return null;
         }
 
         // Si c'est la structure hiérarchique, la convertir en structure plate
         if (resultat.formatHierarchique) {
-          console.log('useFECDataGenerators - Structure hiérarchique détectée');
-          console.log('useFECDataGenerators - charges:', resultat.charges);
-          console.log('useFECDataGenerators - produits:', resultat.produits);
           // Extraire tous les comptes de toutes les catégories de charges
           const chargesFlat = [];
           if (resultat.charges) {
@@ -127,9 +121,6 @@ export const useFECDataGenerators = (parseResult1, parseResult2, cyclesResult2) 
               });
             }
           }
-
-          console.log('useFECDataGenerators - chargesFlat:', chargesFlat);
-          console.log('useFECDataGenerators - produitsFlat:', produitsFlat);
           
           const result = {
             ...resultat,
@@ -141,7 +132,6 @@ export const useFECDataGenerators = (parseResult1, parseResult2, cyclesResult2) 
             chiffreAffaires: resultat.chiffreAffaires || 0
           };
           
-          console.log('useFECDataGenerators - résultat final:', result);
           return result;
         }
 
@@ -216,13 +206,46 @@ export const useFECDataGenerators = (parseResult1, parseResult2, cyclesResult2) 
         
         if (!bilan) return null;
 
-        const convertItem = (item) => ({
-          classe: item.classe || '',
-          libelle: item.libelle || '',
-          totalDebit: item.totalDebit || 0,
-          totalCredit: item.totalCredit || 0,
-          solde: item.solde || 0
-        });
+        const convertItem = (item) => {
+          // BilanGenerator retourne des items avec 'sousClasse' qui est mappé vers 'classe' dans _extraireParClasses
+          const classe = item.classe || item.sousClasse || '';
+          
+          return {
+            classe,
+            libelle: item.libelle || '',
+            brut: item.brut !== undefined ? item.brut : 0,
+            amortissements: item.amortissements !== undefined ? item.amortissements : 0,
+            net: item.net !== undefined ? item.net : (item.solde || 0),
+            totalDebit: item.totalDebit || 0,
+            totalCredit: item.totalCredit || 0,
+            solde: item.net !== undefined ? item.net : (item.solde || 0), // Compatibilité descendante
+            // Préserver tous les comptes avec leurs propriétés complètes (type, totalDebit, totalCredit, solde, montant, brut, amortissements, net, vetuste)
+            comptes: (item.comptes || []).map(compte => {
+              // Calculer le solde si nécessaire
+              const solde = compte.solde !== undefined 
+                ? compte.solde 
+                : ((compte.totalDebit || 0) - (compte.totalCredit || 0));
+              
+              // Déduire le type si non présent (basé sur le solde)
+              const type = compte.type || (solde > 0 ? 'actif' : solde < 0 ? 'passif' : 'actif');
+              
+              return {
+                compteNum: compte.compteNum || '',
+                compteLibelle: compte.compteLibelle || '',
+                totalDebit: compte.totalDebit !== undefined ? compte.totalDebit : (compte.debit || 0),
+                totalCredit: compte.totalCredit !== undefined ? compte.totalCredit : (compte.credit || 0),
+                solde: solde,
+                montant: compte.montant !== undefined ? compte.montant : Math.abs(solde),
+                type: type, // Préserver le type ou le déduire
+                // Propriétés pour les immobilisations (déjà enrichies par _enrichirImmobilisationsAvecAmortissements)
+                brut: compte.brut !== undefined ? compte.brut : (compte.montant || 0),
+                amortissements: compte.amortissements !== undefined ? compte.amortissements : 0,
+                net: compte.net !== undefined ? compte.net : (compte.brut !== undefined ? (compte.brut - (compte.amortissements || 0)) : solde),
+                vetuste: compte.vetuste !== undefined ? compte.vetuste : 0
+              };
+            })
+          };
+        };
 
         const actifImmobilise = Array.isArray(bilan.actif?.immobilise) 
           ? bilan.actif.immobilise.map(convertItem) 
@@ -239,9 +262,21 @@ export const useFECDataGenerators = (parseResult1, parseResult2, cyclesResult2) 
         const capitauxPropres = Array.isArray(bilan.passif?.capitauxPropres) 
           ? bilan.passif.capitauxPropres.map(convertItem) 
           : [];
-        const dettes = Array.isArray(bilan.passif?.dettes) 
-          ? bilan.passif.dettes.map(convertItem) 
+        const provisions = Array.isArray(bilan.passif?.provisions) 
+          ? bilan.passif.provisions.map(convertItem) 
           : [];
+        const dettesLongTerme = Array.isArray(bilan.passif?.dettesLongTerme) 
+          ? bilan.passif.dettesLongTerme.map(convertItem) 
+          : [];
+        const dettesCourtTerme = Array.isArray(bilan.passif?.dettesCourtTerme) 
+          ? bilan.passif.dettesCourtTerme.map(convertItem) 
+          : [];
+        const tresoreriePassif = Array.isArray(bilan.passif?.tresorerie) 
+          ? bilan.passif.tresorerie.map(convertItem) 
+          : [];
+        
+        // Compatibilité avec l'ancienne structure (dettes = dettesLongTerme + dettesCourtTerme)
+        const dettes = [...dettesLongTerme, ...dettesCourtTerme];
 
         return { 
           actif: {
@@ -260,9 +295,18 @@ export const useFECDataGenerators = (parseResult1, parseResult2, cyclesResult2) 
           },
           passif: {
             capitauxPropres: capitauxPropres,
-            dettes: dettes,
+            provisions: provisions,
+            dettesLongTerme: dettesLongTerme,
+            dettesCourtTerme: dettesCourtTerme,
+            tresorerie: tresoreriePassif,
+            dettes: dettes, // Compatibilité avec l'ancienne structure
             totalCapitauxPropres: bilan.passif?.totalCapitauxPropres || 0,
-            totalDettes: bilan.passif?.totalDettes || 0,
+            totalProvisions: bilan.passif?.totalProvisions || 0,
+            totalDettesLongTerme: bilan.passif?.totalDettesLongTerme || 0,
+            totalDettesCourtTerme: bilan.passif?.totalDettesCourtTerme || 0,
+            totalTresorerie: bilan.passif?.totalTresorerie || 0,
+            totalPassifCirculant: bilan.passif?.totalPassifCirculant || 0,
+            totalDettes: (bilan.passif?.totalDettesLongTerme || 0) + (bilan.passif?.totalDettesCourtTerme || 0), // Compatibilité
             total: bilan.passif?.total || 0
           }
         };

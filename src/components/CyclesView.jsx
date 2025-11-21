@@ -1,10 +1,11 @@
-import React, { useEffect, useMemo } from 'react';
-import { TrendingUp, Download, XCircle } from 'lucide-react';
+import React, { useEffect, useMemo, useState } from 'react';
+import { TrendingUp, Download, XCircle, ChevronRight, ChevronDown } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import * as XLSX from 'xlsx';
 import { formatCurrency } from '../utils/formatters';
 import { brightenColor } from '../utils/colors';
 import { useMonthlyData } from '../hooks/useMonthlyData';
+import { getAccountType } from '../core/AccountClassifier';
 
 const CyclesView = ({
   cyclesResult1,
@@ -21,6 +22,11 @@ const CyclesView = ({
   setCumulMode,
   getCycleDetailsByAccount
 }) => {
+  // État pour les collectifs dépliés (expanded collectives)
+  const [expandedCollectives, setExpandedCollectives] = useState(new Set());
+  // État pour le tri des auxiliaires : 'N' ou 'N1'
+  const [sortAuxiliariesBy, setSortAuxiliariesBy] = useState('N');
+
   // Toggle la sélection d'un compte
   const toggleAccountSelection = (compteNum) => {
     setSelectedAccounts(prev => {
@@ -34,10 +40,27 @@ const CyclesView = ({
     });
   };
 
-  // Réinitialiser les sélections quand on change de cycle
+  // Toggle l'affichage des auxiliaires d'un collectif
+  const toggleCollectiveExpansion = (compteNum) => {
+    setExpandedCollectives(prev => {
+      const newSet = new Set(prev);
+      if (newSet.has(compteNum)) {
+        newSet.delete(compteNum);
+      } else {
+        newSet.add(compteNum);
+      }
+      return newSet;
+    });
+  };
+
+  // Réinitialiser les sélections et collectifs dépliés quand on change de cycle
   useEffect(() => {
     setSelectedAccounts(new Set());
+    setExpandedCollectives(new Set());
   }, [selectedCycleForDetail, setSelectedAccounts]);
+
+  // La logique de détection des collectifs est maintenant dans useAccountDetails.js
+  // Les comptes collectifs sont identifiés via CompteAuxNum du FEC
 
   // Générer les données mensuelles
   const monthlyData = useMonthlyData({
@@ -443,6 +466,34 @@ const CyclesView = ({
               Détail par compte: {cyclesResult1.statsParCycle[selectedCycleForDetail]?.nom}
             </h4>
             <div className="flex items-center gap-2">
+              {/* Bouton pour choisir le tri des auxiliaires */}
+              <div className="flex items-center gap-2 bg-white rounded-lg border border-gray-300 p-1">
+                <span className="text-xs text-gray-600 px-2">Tri Auxiliaire sur</span>
+                {parseResult2 && (
+                  <button
+                    onClick={() => setSortAuxiliariesBy('N1')}
+                    className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                      sortAuxiliariesBy === 'N1'
+                        ? 'bg-indigo-600 text-white'
+                        : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }`}
+                    title="Trier les auxiliaires selon le solde N-1"
+                  >
+                    N-1
+                  </button>
+                )}
+                <button
+                  onClick={() => setSortAuxiliariesBy('N')}
+                  className={`px-3 py-1 rounded text-xs font-medium transition-colors ${
+                    sortAuxiliariesBy === 'N'
+                      ? 'bg-indigo-600 text-white'
+                      : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                  }`}
+                  title="Trier les auxiliaires selon le solde N"
+                >
+                  N
+                </button>
+              </div>
               <button
                 onClick={handleExportExcel}
                 className="flex items-center gap-2 px-3 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors text-sm font-medium"
@@ -465,10 +516,160 @@ const CyclesView = ({
               const accountsData = getCycleDetailsByAccount(selectedCycleForDetail, cyclesResult1, cyclesResult2);
               const allAccounts = [...accountsData.bilan, ...accountsData.resultat];
               
+              // Les comptes sont déjà organisés en collectifs et auxiliaires par useAccountDetails
+              // Les comptes collectifs ont isCollective: true et auxiliaries: [...]
+              // Trier les auxiliaires selon le choix de l'utilisateur (N ou N-1)
+              const sortAuxiliariesByPeriod = (accounts) => {
+                return accounts.map(account => {
+                  if (account.isCollective && account.auxiliaries && account.auxiliaries.length > 0) {
+                    // Copier le compte pour ne pas muter l'original
+                    const sortedAccount = { ...account, auxiliaries: [...account.auxiliaries] };
+                    
+                    // Déterminer le solde du collectif selon la période choisie
+                    const collectifSolde = sortAuxiliariesBy === 'N1' 
+                      ? (sortedAccount.soldeN1 || 0)
+                      : (sortedAccount.solde || 0);
+                    
+                    // Trier les auxiliaires
+                    sortedAccount.auxiliaries.sort((a, b) => {
+                      const soldeA = sortAuxiliariesBy === 'N1' ? (a.soldeN1 || 0) : (a.solde || 0);
+                      const soldeB = sortAuxiliariesBy === 'N1' ? (b.soldeN1 || 0) : (b.solde || 0);
+                      
+                      if (collectifSolde < 0) {
+                        // Collectif créditeur : tri croissant (du plus négatif au moins négatif)
+                        return soldeA - soldeB;
+                      } else {
+                        // Collectif débiteur : tri décroissant (du plus positif au moins positif)
+                        return soldeB - soldeA;
+                      }
+                    });
+                    
+                    return sortedAccount;
+                  }
+                  return account;
+                });
+              };
+              
+              const organizedBilan = sortAuxiliariesByPeriod(accountsData.bilan);
+              const organizedResultat = sortAuxiliariesByPeriod(accountsData.resultat);
+              
+              // Fonction pour générer toutes les lignes à afficher (avec auxiliaires dépliés)
+              const generateAccountRows = (organizedAccounts, sectionType) => {
+                const rows = [];
+                organizedAccounts.forEach((account, idx) => {
+                  const isExpanded = expandedCollectives.has(account.compteNum);
+                  const hasAuxiliaries = account.isCollective && account.auxiliaries && account.auxiliaries.length > 0;
+                  
+                  // Ajouter la ligne du compte principal (collectif ou simple)
+                  // Pour les collectifs, on n'affiche que le compte principal (pas ses écritures sans auxiliaire car elles sont dans les auxiliaires)
+                  rows.push({
+                    account: {
+                      ...account,
+                      // Pour un collectif, le solde est déjà la somme des auxiliaires
+                      compteNum: account.compteNum,
+                      compteLibelle: account.compteLibelle,
+                      solde: account.solde,
+                      soldeN1: account.soldeN1 || 0
+                    },
+                    idx,
+                    sectionType,
+                    isAuxiliary: false,
+                    hasAuxiliaries,
+                    isExpanded,
+                    isCollective: account.isCollective || false,
+                    auxiliariesCount: hasAuxiliaries ? account.auxiliaries.length : 0
+                  });
+                  
+                  // Si c'est un collectif déplié, ajouter les auxiliaires
+                  if (hasAuxiliaries && isExpanded && account.auxiliaries) {
+                    account.auxiliaries.forEach((aux, auxIdx) => {
+                      rows.push({
+                        account: {
+                          compteNum: aux.compteAuxNum || aux.compteNum,
+                          compteLibelle: aux.compteAuxLibelle || aux.compteLibelle || aux.compteAuxNum,
+                          solde: aux.solde || 0,
+                          soldeN1: aux.soldeN1 || 0
+                        },
+                        idx: `${idx}-aux-${auxIdx}`,
+                        sectionType,
+                        isAuxiliary: true,
+                        hasAuxiliaries: false,
+                        isExpanded: false,
+                        isCollective: false
+                      });
+                    });
+                  }
+                });
+                return rows;
+              };
+              
+              // Fonction pour rendre une ligne de compte
+              const renderAccountRow = (rowData) => {
+                const { account, idx, sectionType, isAuxiliary, hasAuxiliaries, isExpanded, auxiliariesCount = 0 } = rowData;
+                
+                return (
+                  <tr 
+                    key={`${sectionType}-${account.compteNum}-${idx}`}
+                    className={`border-t border-gray-200 hover:bg-gray-100 ${isAuxiliary ? 'bg-gray-50' : ''}`}
+                    style={isAuxiliary ? { opacity: 0.9 } : {}}
+                  >
+                    <td className="px-3 py-2 text-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedAccounts.has(account.compteNum)}
+                        onChange={() => toggleAccountSelection(account.compteNum)}
+                        className="w-4 h-4 cursor-pointer"
+                      />
+                    </td>
+                    <td 
+                      className={`px-3 py-2 font-mono text-xs ${hasAuxiliaries ? 'cursor-pointer hover:text-indigo-600' : ''} ${isAuxiliary ? 'pl-8' : ''}`}
+                      onClick={hasAuxiliaries ? () => toggleCollectiveExpansion(account.compteNum) : undefined}
+                      title={hasAuxiliaries ? 'Cliquez pour voir les comptes auxiliaires' : ''}
+                    >
+                      <div className="flex items-center gap-1">
+                        {hasAuxiliaries && (
+                          <span className="inline-flex items-center">
+                            {isExpanded ? (
+                              <ChevronDown size={14} className="text-indigo-600" />
+                            ) : (
+                              <ChevronRight size={14} className="text-gray-400" />
+                            )}
+                          </span>
+                        )}
+                        {isAuxiliary && !hasAuxiliaries && <span className="text-gray-300 mr-1">└</span>}
+                        <span className={hasAuxiliaries ? 'font-semibold text-indigo-700' : ''}>
+                          {account.compteNum}
+                        </span>
+                        {hasAuxiliaries && auxiliariesCount > 0 && (
+                          <span className="text-xs text-gray-500 ml-1">
+                            ({auxiliariesCount} auxiliaire{auxiliariesCount > 1 ? 's' : ''})
+                          </span>
+                        )}
+                      </div>
+                    </td>
+                    <td className={`px-3 py-2 ${hasAuxiliaries ? 'font-semibold' : ''}`}>
+                      {account.compteLibelle}
+                    </td>
+                    {parseResult2 && (
+                      <td className={`px-3 py-2 text-right font-mono ${
+                        (account.soldeN1 || 0) >= 0 ? 'text-green-600' : 'text-red-600'
+                      }`}>
+                        {formatCurrency(account.soldeN1 || 0)}
+                      </td>
+                    )}
+                    <td className={`px-3 py-2 text-right font-mono ${!isAuxiliary ? 'font-bold' : ''} ${
+                      account.solde >= 0 ? 'text-green-600' : 'text-red-600'
+                    }`}>
+                      {formatCurrency(account.solde)}
+                    </td>
+                  </tr>
+                );
+              };
+              
               return (
                 <div className="space-y-6">
                   {/* Section Comptes de Bilan */}
-                  {accountsData.bilan.length > 0 && (
+                  {organizedBilan.length > 0 && (
                     <div>
                       <div className="bg-blue-50 px-3 py-2 mb-2 rounded-t-lg">
                         <h5 className="font-bold text-blue-800">📊 COMPTES DE BILAN (Classes 1 à 5)</h5>
@@ -503,32 +704,7 @@ const CyclesView = ({
                           </tr>
                         </thead>
                         <tbody>
-                          {accountsData.bilan.map((account, idx) => (
-                            <tr key={`bilan-${idx}`} className="border-t border-gray-200 hover:bg-gray-100">
-                              <td className="px-3 py-2 text-center">
-                                <input
-                                  type="checkbox"
-                                  checked={selectedAccounts.has(account.compteNum)}
-                                  onChange={() => toggleAccountSelection(account.compteNum)}
-                                  className="w-4 h-4 cursor-pointer"
-                                />
-                              </td>
-                              <td className="px-3 py-2 font-mono text-xs">{account.compteNum}</td>
-                              <td className="px-3 py-2">{account.compteLibelle}</td>
-                              {parseResult2 && (
-                                <td className={`px-3 py-2 text-right font-mono ${
-                                  (account.soldeN1 || 0) >= 0 ? 'text-green-600' : 'text-red-600'
-                                }`}>
-                                  {formatCurrency(account.soldeN1 || 0)}
-                                </td>
-                              )}
-                              <td className={`px-3 py-2 text-right font-mono font-bold ${
-                                account.solde >= 0 ? 'text-green-600' : 'text-red-600'
-                              }`}>
-                                {formatCurrency(account.solde)}
-                              </td>
-                            </tr>
-                          ))}
+                          {generateAccountRows(organizedBilan, 'bilan').map(rowData => renderAccountRow(rowData))}
                         </tbody>
                         <tfoot className="bg-blue-100 font-bold">
                           <tr>
@@ -552,7 +728,7 @@ const CyclesView = ({
                   )}
                   
                   {/* Section Comptes de Résultat */}
-                  {accountsData.resultat.length > 0 && (
+                  {organizedResultat.length > 0 && (
                     <div>
                       <div className="bg-green-50 px-3 py-2 mb-2 rounded-t-lg">
                         <h5 className="font-bold text-green-800">📈 COMPTES DE RÉSULTAT (Classes 6 et 7)</h5>
@@ -587,32 +763,7 @@ const CyclesView = ({
                           </tr>
                         </thead>
                         <tbody>
-                          {accountsData.resultat.map((account, idx) => (
-                            <tr key={`resultat-${idx}`} className="border-t border-gray-200 hover:bg-gray-100">
-                              <td className="px-3 py-2 text-center">
-                                <input
-                                  type="checkbox"
-                                  checked={selectedAccounts.has(account.compteNum)}
-                                  onChange={() => toggleAccountSelection(account.compteNum)}
-                                  className="w-4 h-4 cursor-pointer"
-                                />
-                              </td>
-                              <td className="px-3 py-2 font-mono text-xs">{account.compteNum}</td>
-                              <td className="px-3 py-2">{account.compteLibelle}</td>
-                              {parseResult2 && (
-                                <td className={`px-3 py-2 text-right font-mono ${
-                                  (account.soldeN1 || 0) >= 0 ? 'text-green-600' : 'text-red-600'
-                                }`}>
-                                  {formatCurrency(account.soldeN1 || 0)}
-                                </td>
-                              )}
-                              <td className={`px-3 py-2 text-right font-mono font-bold ${
-                                account.solde >= 0 ? 'text-green-600' : 'text-red-600'
-                              }`}>
-                                {formatCurrency(account.solde)}
-                              </td>
-                            </tr>
-                          ))}
+                          {generateAccountRows(organizedResultat, 'resultat').map(rowData => renderAccountRow(rowData))}
                         </tbody>
                         <tfoot className="bg-green-100 font-bold">
                           <tr>

@@ -4,6 +4,7 @@ import { formatCurrency, formatCurrencyNoDecimals } from '../utils/formatters';
 
 const BilanView = ({
   generateBilan,
+  parseResult1,
   parseResult2,
   showBilanN,
   setShowBilanN,
@@ -80,7 +81,10 @@ const BilanView = ({
              bilanN1?.actif?.circulant?.creances?.find(i => i.classe === item.classe) ||
              bilanN1?.actif?.circulant?.tresorerie?.find(i => i.classe === item.classe) ||
              bilanN1?.passif?.capitauxPropres?.find(i => i.classe === item.classe) ||
-             bilanN1?.passif?.dettes?.find(i => i.classe === item.classe);
+             bilanN1?.passif?.provisions?.find(i => i.classe === item.classe) ||
+             bilanN1?.passif?.dettesLongTerme?.find(i => i.classe === item.classe) ||
+             bilanN1?.passif?.dettesCourtTerme?.find(i => i.classe === item.classe) ||
+             bilanN1?.passif?.tresorerie?.find(i => i.classe === item.classe);
     };
 
     const determineType = (item) => {
@@ -91,11 +95,13 @@ const BilanView = ({
     return (
       <>
         <tr className="bg-gray-100 font-semibold">
-          <td colSpan={2 + (showBilanN ? 1 : 0) + (showBilanN1 && parseResult2 ? 1 : 0) + (showBilanComparaison && parseResult2 ? 1 : 0)} className="px-3 py-1 text-left text-gray-700">{label}</td>
+          <td colSpan={colSpanHeader} className="px-3 py-1 text-left text-gray-700">{label}</td>
         </tr>
         {items.map((item, idx) => {
           const itemN1 = findItemN1(item);
-          const itemVariation = itemN1 ? item.solde - itemN1.solde : null;
+          const itemNet = item.net !== undefined ? item.net : (item.solde || 0);
+          const itemNetN1 = itemN1 ? (itemN1.net !== undefined ? itemN1.net : (itemN1.solde || 0)) : 0;
+          const itemVariation = itemN1 ? itemNet - itemNetN1 : null;
           const itemType = determineType(item);
 
           return (
@@ -109,13 +115,13 @@ const BilanView = ({
                 {item.libelle}
               </td>
               {showBilanN && (
-                <td className="px-3 py-1 text-right font-mono text-xs">
-                  {formatCurrencyNoDecimals(item.solde)}
+                <td className="px-3 py-1 text-right font-mono text-xs font-bold">
+                  {formatCurrencyNoDecimals(itemNet)}
                 </td>
               )}
               {showBilanN1 && parseResult2 && (
-                <td className="px-3 py-1 text-right font-mono text-xs">
-                  {itemN1 ? formatCurrencyNoDecimals(itemN1.solde) : '-'}
+                <td className="px-3 py-1 text-right font-mono text-xs font-bold">
+                  {itemN1 ? formatCurrencyNoDecimals(itemNetN1) : '-'}
                 </td>
               )}
               {showBilanComparaison && parseResult2 && (
@@ -200,13 +206,13 @@ const BilanView = ({
                   <th className="px-3 py-2 text-left font-semibold text-gray-700">Classe</th>
                   <th className="px-3 py-2 text-left font-semibold text-gray-700">Libellé</th>
                   {showBilanN && (
-                    <th className="px-3 py-2 text-right font-semibold text-gray-700">N</th>
+                    <th className="px-3 py-2 text-right font-semibold text-gray-700">Net</th>
                   )}
                   {showBilanN1 && parseResult2 && (
-                    <th className="px-3 py-2 text-right font-semibold text-gray-700">N-1</th>
+                    <th className="px-3 py-2 text-right font-semibold text-gray-700">Net N-1</th>
                   )}
                   {showBilanComparaison && parseResult2 && (
-                    <th className="px-3 py-2 text-right font-semibold text-gray-700">Var</th>
+                    <th className="px-3 py-2 text-right font-semibold text-gray-700">Var Net</th>
                   )}
                 </tr>
               </thead>
@@ -217,7 +223,9 @@ const BilanView = ({
                 </tr>
                 {bilanN.actif.immobilise && bilanN.actif.immobilise.map((item, idx) => {
                   const itemN1 = bilanN1?.actif?.immobilise?.find(i => i.classe === item.classe);
-                  const itemVariation = itemN1 ? item.solde - itemN1.solde : null;
+                  const net = item.net !== undefined ? item.net : item.solde;
+                  const netN1 = itemN1?.net !== undefined ? itemN1.net : (itemN1?.solde || 0);
+                  const itemVariation = itemN1 ? net - netN1 : null;
 
                   return (
                     <tr key={idx} className="border-t border-gray-200 hover:bg-gray-50">
@@ -230,11 +238,11 @@ const BilanView = ({
                         {item.libelle}
                       </td>
                       {showBilanN && (
-                        <td className="px-3 py-1 text-right font-mono text-xs">{formatCurrencyNoDecimals(item.solde)}</td>
+                        <td className="px-3 py-1 text-right font-mono text-xs font-bold">{formatCurrencyNoDecimals(net)}</td>
                       )}
                       {showBilanN1 && parseResult2 && (
-                        <td className="px-3 py-1 text-right font-mono text-xs">
-                          {itemN1 ? formatCurrencyNoDecimals(itemN1.solde) : '-'}
+                        <td className="px-3 py-1 text-right font-mono text-xs font-bold">
+                          {itemN1 ? formatCurrencyNoDecimals(netN1) : '-'}
                         </td>
                       )}
                       {showBilanComparaison && parseResult2 && (
@@ -296,11 +304,13 @@ const BilanView = ({
               <tbody>
                 {/* CAPITAUX PROPRES */}
                 <tr className="bg-purple-50 font-bold">
-                  <td colSpan={colSpanHeader} className="px-3 py-2 text-left text-purple-800">I - CAPITAUX PROPRES / FINANCEMENT PERMANENT</td>
+                  <td colSpan={colSpanHeader} className="px-3 py-2 text-left text-purple-800">I - CAPITAUX PROPRES</td>
                 </tr>
                 {bilanN.passif.capitauxPropres && bilanN.passif.capitauxPropres.map((item, idx) => {
                   const itemN1 = bilanN1?.passif?.capitauxPropres?.find(i => i.classe === item.classe);
-                  const itemVariation = itemN1 ? item.solde - itemN1.solde : null;
+                  const itemNet = item.net !== undefined ? item.net : (item.solde || 0);
+                  const itemNetN1 = itemN1 ? (itemN1.net !== undefined ? itemN1.net : (itemN1.solde || 0)) : 0;
+                  const itemVariation = itemN1 ? itemNet - itemNetN1 : null;
 
                   return (
                     <tr key={idx} className="border-t border-gray-200 hover:bg-gray-50">
@@ -313,11 +323,11 @@ const BilanView = ({
                         {item.libelle}
                       </td>
                       {showBilanN && (
-                        <td className="px-3 py-1 text-right font-mono text-xs">{formatCurrencyNoDecimals(item.solde)}</td>
+                        <td className="px-3 py-1 text-right font-mono text-xs">{formatCurrencyNoDecimals(itemNet)}</td>
                       )}
                       {showBilanN1 && parseResult2 && (
                         <td className="px-3 py-1 text-right font-mono text-xs">
-                          {itemN1 ? formatCurrencyNoDecimals(itemN1.solde) : '-'}
+                          {itemN1 ? formatCurrencyNoDecimals(itemNetN1) : '-'}
                         </td>
                       )}
                       {showBilanComparaison && parseResult2 && (
@@ -333,15 +343,122 @@ const BilanView = ({
                 })}
                 {renderTotalRow('Total I - CAPITAUX PROPRES', bilanN.passif.totalCapitauxPropres, bilanN1?.passif?.totalCapitauxPropres, 2, false)}
 
+                {/* PROVISIONS */}
+                {bilanN.passif.provisions && bilanN.passif.provisions.length > 0 && (
+                  <>
+                    <tr className="bg-purple-50 font-bold">
+                      <td colSpan={colSpanHeader} className="px-3 py-2 text-left text-purple-800">I bis - PROVISIONS</td>
+                    </tr>
+                    {bilanN.passif.provisions.map((item, idx) => {
+                      const itemN1 = bilanN1?.passif?.provisions?.find(i => i.classe === item.classe);
+                      const itemNet = item.net !== undefined ? item.net : (item.solde || 0);
+                      const itemNetN1 = itemN1 ? (itemN1.net !== undefined ? itemN1.net : (itemN1.solde || 0)) : 0;
+                      const itemVariation = itemN1 ? itemNet - itemNetN1 : null;
+
+                      return (
+                        <tr key={idx} className="border-t border-gray-200 hover:bg-gray-50">
+                          <td className="px-3 py-1 font-mono text-xs pl-6">{item.classe}</td>
+                          <td 
+                            className="px-3 py-1 cursor-pointer hover:text-indigo-600 hover:underline transition-colors pl-6"
+                            onClick={() => setSelectedClasse(selectedClasse?.type === 'passif' && selectedClasse?.classe === item.classe ? null : { type: 'passif', classe: item.classe })}
+                            title="Cliquez pour voir le détail par compte"
+                          >
+                            {item.libelle}
+                          </td>
+                          {showBilanN && (
+                            <td className="px-3 py-1 text-right font-mono text-xs">{formatCurrencyNoDecimals(itemNet)}</td>
+                          )}
+                          {showBilanN1 && parseResult2 && (
+                            <td className="px-3 py-1 text-right font-mono text-xs">
+                              {itemN1 ? formatCurrencyNoDecimals(itemNetN1) : '-'}
+                            </td>
+                          )}
+                          {showBilanComparaison && parseResult2 && (
+                            <td className={`px-3 py-1 text-right font-mono text-xs ${
+                              itemVariation === null ? 'text-gray-400' : 
+                              (itemVariation >= 0 ? 'text-green-600' : 'text-red-600')
+                            }`}>
+                              {itemVariation !== null ? (itemVariation >= 0 ? '+' : '') + formatCurrencyNoDecimals(itemVariation) : '-'}
+                            </td>
+                          )}
+                        </tr>
+                      );
+                    })}
+                    {renderTotalRow('Total I bis - PROVISIONS', bilanN.passif.totalProvisions || 0, bilanN1?.passif?.totalProvisions || 0, 2, false)}
+                  </>
+                )}
+
+                {/* DETTES FINANCIÈRES (LONG TERME) */}
+                <tr className="bg-purple-50 font-bold">
+                  <td colSpan={colSpanHeader} className="px-3 py-2 text-left text-purple-800">II - DETTES FINANCIÈRES</td>
+                </tr>
+                {bilanN.passif.dettesLongTerme && bilanN.passif.dettesLongTerme.length > 0 ? bilanN.passif.dettesLongTerme.map((item, idx) => {
+                  const itemN1 = bilanN1?.passif?.dettesLongTerme?.find(i => i.classe === item.classe);
+                  const itemNet = item.net !== undefined ? item.net : (item.solde || 0);
+                  const itemNetN1 = itemN1 ? (itemN1.net !== undefined ? itemN1.net : (itemN1.solde || 0)) : 0;
+                  const itemVariation = itemN1 ? itemNet - itemNetN1 : null;
+
+                  return (
+                    <tr key={idx} className="border-t border-gray-200 hover:bg-gray-50">
+                      <td className="px-3 py-1 font-mono text-xs pl-6">{item.classe}</td>
+                      <td 
+                        className="px-3 py-1 cursor-pointer hover:text-indigo-600 hover:underline transition-colors pl-6"
+                        onClick={() => setSelectedClasse(selectedClasse?.type === 'passif' && selectedClasse?.classe === item.classe ? null : { type: 'passif', classe: item.classe })}
+                        title="Cliquez pour voir le détail par compte"
+                      >
+                        {item.libelle}
+                      </td>
+                      {showBilanN && (
+                        <td className="px-3 py-1 text-right font-mono text-xs">{formatCurrencyNoDecimals(itemNet)}</td>
+                      )}
+                      {showBilanN1 && parseResult2 && (
+                        <td className="px-3 py-1 text-right font-mono text-xs">
+                          {itemN1 ? formatCurrencyNoDecimals(itemNetN1) : '-'}
+                        </td>
+                      )}
+                      {showBilanComparaison && parseResult2 && (
+                        <td className={`px-3 py-1 text-right font-mono text-xs ${
+                          itemVariation === null ? 'text-gray-400' : 
+                          (itemVariation >= 0 ? 'text-green-600' : 'text-red-600')
+                        }`}>
+                          {itemVariation !== null ? (itemVariation >= 0 ? '+' : '') + formatCurrencyNoDecimals(itemVariation) : '-'}
+                        </td>
+                      )}
+                    </tr>
+                  );
+                }) : (
+                  <tr>
+                    <td colSpan={colSpanHeader} className="px-3 py-1 text-gray-400 italic text-sm pl-6">Aucune dette financière</td>
+                  </tr>
+                )}
+                {renderTotalRow('Total II - DETTES FINANCIÈRES', bilanN.passif.totalDettesLongTerme || 0, bilanN1?.passif?.totalDettesLongTerme || 0, 2, false)}
+
                 {/* PASSIF CIRCULANT */}
                 <tr className="bg-purple-50 font-bold">
-                  <td colSpan={colSpanHeader} className="px-3 py-2 text-left text-purple-800">II - PASSIF CIRCULANT</td>
+                  <td colSpan={colSpanHeader} className="px-3 py-2 text-left text-purple-800">III - PASSIF CIRCULANT</td>
                 </tr>
                 
-                {/* Dettes */}
-                {renderSubRubrique('A - Dettes', bilanN.passif.dettes, bilanN.passif.totalDettes, bilanN1?.passif?.totalDettes)}
+                {/* Dettes à court terme */}
+                {bilanN.passif.dettesCourtTerme && bilanN.passif.dettesCourtTerme.length > 0 ? (
+                  renderSubRubrique('A - Dettes', bilanN.passif.dettesCourtTerme, bilanN.passif.totalDettesCourtTerme || 0, bilanN1?.passif?.totalDettesCourtTerme || 0)
+                ) : (
+                  <>
+                    <tr className="bg-gray-100 font-semibold">
+                      <td colSpan={colSpanHeader} className="px-3 py-1 text-left text-gray-700">A - Dettes</td>
+                    </tr>
+                    <tr>
+                      <td colSpan={colSpanHeader} className="px-3 py-1 text-gray-400 italic text-sm pl-6">Aucune dette à court terme</td>
+                    </tr>
+                    {renderTotalRow('Total A - Dettes', 0, 0, 2, false)}
+                  </>
+                )}
                 
-                {renderTotalRow('Total II - PASSIF CIRCULANT', bilanN.passif.totalDettes, bilanN1?.passif?.totalDettes, 2, false)}
+                {/* Trésorerie passive */}
+                {bilanN.passif.tresorerie && bilanN.passif.tresorerie.length > 0 && (
+                  renderSubRubrique('B - Trésorerie passive', bilanN.passif.tresorerie, bilanN.passif.totalTresorerie || 0, bilanN1?.passif?.totalTresorerie || 0)
+                )}
+                
+                {renderTotalRow('Total III - PASSIF CIRCULANT', bilanN.passif.totalPassifCirculant || 0, bilanN1?.passif?.totalPassifCirculant || 0, 2, false)}
                 
                 {/* Total Passif */}
                 {renderTotalRow('TOTAL PASSIF', bilanN.passif.total, bilanN1?.passif?.total, 2, true)}
@@ -352,87 +469,326 @@ const BilanView = ({
       </div>
 
       {/* Détail par compte pour une classe sélectionnée */}
-      {selectedClasse && (selectedClasse.type === 'actif' || selectedClasse.type === 'passif') && (
-        <div className="mt-6 p-6 bg-gray-50 rounded-lg border-2 border-indigo-200">
-          <div className="flex items-center justify-between mb-4">
-            <h4 className="text-lg font-bold text-gray-800">
-              Détail par compte: {selectedClasse.type === 'actif' ? 'Actif' : 'Passif'} - Classe {selectedClasse.classe}
-              {bilanN && (
-                <span className="ml-2 text-gray-600">
-                  ({selectedClasse.type === 'actif' 
-                    ? (bilanN.actif.immobilise?.find(a => a.classe === selectedClasse.classe)?.libelle ||
-                       bilanN.actif.circulant?.stocks?.find(a => a.classe === selectedClasse.classe)?.libelle ||
-                       bilanN.actif.circulant?.creances?.find(a => a.classe === selectedClasse.classe)?.libelle ||
-                       bilanN.actif.circulant?.tresorerie?.find(a => a.classe === selectedClasse.classe)?.libelle)
-                    : (bilanN.passif.capitauxPropres?.find(p => p.classe === selectedClasse.classe)?.libelle ||
-                       bilanN.passif.dettes?.find(p => p.classe === selectedClasse.classe)?.libelle)})
-                </span>
-              )}
-            </h4>
-            <button
-              onClick={() => setSelectedClasse(null)}
-              className="text-gray-500 hover:text-gray-700"
-            >
-              <XCircle size={20} />
-            </button>
+      {selectedClasse && (selectedClasse.type === 'actif' || selectedClasse.type === 'passif') && (() => {
+        // Trouver l'item correspondant à la classe sélectionnée
+        let selectedItem = null;
+        let selectedLibelle = '';
+        
+        if (selectedClasse.type === 'actif' && bilanN?.actif) {
+          selectedItem = 
+            bilanN.actif.immobilise?.find(a => a.classe === selectedClasse.classe) ||
+            bilanN.actif.circulant?.stocks?.find(a => a.classe === selectedClasse.classe) ||
+            bilanN.actif.circulant?.creances?.find(a => a.classe === selectedClasse.classe) ||
+            bilanN.actif.circulant?.tresorerie?.find(a => a.classe === selectedClasse.classe) ||
+            bilanN.actif.regularisation?.find(a => a.classe === selectedClasse.classe);
+          
+          if (selectedItem) {
+            selectedLibelle = selectedItem.libelle || '';
+          }
+        } else if (selectedClasse.type === 'passif' && bilanN?.passif) {
+          selectedItem = 
+            bilanN.passif.capitauxPropres?.find(p => p.classe === selectedClasse.classe) ||
+            bilanN.passif.provisions?.find(p => p.classe === selectedClasse.classe) ||
+            bilanN.passif.dettesLongTerme?.find(p => p.classe === selectedClasse.classe) ||
+            bilanN.passif.dettesCourtTerme?.find(p => p.classe === selectedClasse.classe) ||
+            bilanN.passif.tresorerie?.find(p => p.classe === selectedClasse.classe) ||
+            bilanN.passif.regularisation?.find(p => p.classe === selectedClasse.classe);
+          
+          if (selectedItem) {
+            selectedLibelle = selectedItem.libelle || '';
+          }
+        }
+        
+        // Vérifier si c'est une classe d'immobilisation
+        const isImmobilisation = ['20', '21', '22', '23', '26', '27'].includes(selectedClasse.classe);
+        
+        // Utiliser UNIQUEMENT les comptes de selectedItem (source unique)
+        let detailComptes = selectedItem?.comptes || [];
+        
+        // Les comptes viennent maintenant directement de BilanGenerator avec toutes les infos
+        // Structure : { compteNum, compteLibelle, totalDebit, totalCredit, solde, montant, type }
+        // Pour les immobilisations : { ..., brut, amortissements, net, vetuste }
+        
+        // Filtrage pour les comptes à double position selon le type
+        const isDoublePosition = ['41', '44', '40', '42', '43', '45', '46', '47', '48'].includes(selectedClasse.classe);
+        if (isDoublePosition && detailComptes.length > 0) {
+          // Les comptes ont déjà une propriété 'type' définie par BilanGenerator
+          // Filtrer selon cette propriété
+          detailComptes = detailComptes.filter(compte => compte.type === selectedClasse.type);
+        }
+        
+        if (detailComptes.length === 0) {
+          return (
+            <div className="mt-6 p-6 bg-gray-50 rounded-lg border-2 border-indigo-200">
+              <div className="flex items-center justify-between mb-4">
+                <h4 className="text-lg font-bold text-gray-800">
+                  Détail par compte: {selectedClasse.type === 'actif' ? 'Actif' : 'Passif'} - Classe {selectedClasse.classe}
+                  {selectedLibelle && (
+                    <span className="ml-2 text-gray-600">({selectedLibelle})</span>
+                  )}
+                </h4>
+                <button
+                  onClick={() => setSelectedClasse(null)}
+                  className="text-gray-500 hover:text-gray-700"
+                >
+                  <XCircle size={20} />
+                </button>
+              </div>
+              <div className="text-center text-gray-500 py-8">
+                Aucun compte trouvé pour cette classe
+              </div>
+            </div>
+          );
+        }
+        
+        // Calculer les totaux depuis les comptes
+        const totalDebit = detailComptes.reduce((sum, acc) => sum + (acc.totalDebit || 0), 0);
+        const totalCredit = detailComptes.reduce((sum, acc) => sum + (acc.totalCredit || 0), 0);
+        const totalSolde = detailComptes.reduce((sum, acc) => sum + (acc.solde || 0), 0);
+        
+        // Pour les immobilisations, les totaux sont déjà calculés
+        const totalBrut = isImmobilisation ? detailComptes.reduce((sum, acc) => sum + (acc.brut || 0), 0) : 0;
+        const totalAmortissements = isImmobilisation ? detailComptes.reduce((sum, acc) => sum + (acc.amortissements || 0), 0) : 0;
+        const totalNet = isImmobilisation ? detailComptes.reduce((sum, acc) => sum + (acc.net || 0), 0) : totalSolde;
+        const totalVetuste = isImmobilisation && totalBrut > 0 ? (totalAmortissements / totalBrut) * 100 : 0;
+        
+        return (
+          <div className="mt-6 p-6 bg-gray-50 rounded-lg border-2 border-indigo-200">
+            <div className="flex items-center justify-between mb-4">
+              <h4 className="text-lg font-bold text-gray-800">
+                Détail par compte: {selectedClasse.type === 'actif' ? 'Actif' : 'Passif'} - Classe {selectedClasse.classe}
+                {selectedLibelle && (
+                  <span className="ml-2 text-gray-600">({selectedLibelle})</span>
+                )}
+              </h4>
+              <button
+                onClick={() => setSelectedClasse(null)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                <XCircle size={20} />
+              </button>
+            </div>
+            
+            {/* Vérification de cohérence */}
+            {selectedItem && Math.abs(totalNet - (selectedItem.net !== undefined ? selectedItem.net : selectedItem.solde || 0)) > 0.01 && (
+              <div className="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">
+                ⚠️ Attention : La somme des comptes individuels ({formatCurrency(totalNet)}) ne correspond pas exactement au {isImmobilisation ? 'net' : 'solde'} du groupe ({formatCurrency(selectedItem.net !== undefined ? selectedItem.net : selectedItem.solde || 0)}).
+              </div>
+            )}
+            
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-200">
+                  <tr>
+                    <th className="px-3 py-2 text-left font-semibold text-gray-700">Numéro de compte</th>
+                    <th className="px-3 py-2 text-left font-semibold text-gray-700">Libellé du compte</th>
+                    {isImmobilisation ? (
+                      <>
+                        <th className="px-3 py-2 text-right font-semibold text-gray-700">Brut</th>
+                        <th className="px-3 py-2 text-right font-semibold text-gray-700">Amortissements</th>
+                        <th className="px-3 py-2 text-right font-semibold text-gray-700">Net</th>
+                        <th className="px-3 py-2 text-right font-semibold text-gray-700">% Vétusté</th>
+                      </>
+                    ) : (
+                      <>
+                        <th className="px-3 py-2 text-right font-semibold text-gray-700">Débit</th>
+                        <th className="px-3 py-2 text-right font-semibold text-gray-700">Crédit</th>
+                        <th className="px-3 py-2 text-right font-semibold text-gray-700">Solde</th>
+                      </>
+                    )}
+                  </tr>
+                </thead>
+                <tbody>
+                  {detailComptes.map((account, idx) => (
+                    <tr key={idx} className="border-t border-gray-200 hover:bg-gray-100">
+                      <td className="px-3 py-2 font-mono text-xs">{account.compteNum}</td>
+                      <td className="px-3 py-2">{account.compteLibelle || account.compteNum}</td>
+                      {isImmobilisation ? (
+                        <>
+                          <td className="px-3 py-2 text-right font-mono">
+                            {formatCurrency(account.brut || 0)}
+                          </td>
+                          <td className="px-3 py-2 text-right font-mono text-red-600">
+                            {formatCurrency(account.amortissements || 0)}
+                          </td>
+                          <td className={`px-3 py-2 text-right font-mono font-bold ${
+                            selectedClasse.type === 'actif' 
+                              ? 'text-blue-600' 
+                              : 'text-purple-600'
+                          }`}>
+                            {formatCurrency(account.net || 0)}
+                          </td>
+                          <td className="px-3 py-2 text-right font-mono text-gray-600">
+                            {account.brut > 0 ? `${account.vetuste?.toFixed(2) || 0}%` : '-'}
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="px-3 py-2 text-right font-mono">
+                            {account.totalDebit > 0 ? formatCurrency(account.totalDebit) : '-'}
+                          </td>
+                          <td className="px-3 py-2 text-right font-mono">
+                            {account.totalCredit > 0 ? formatCurrency(account.totalCredit) : '-'}
+                          </td>
+                          <td className={`px-3 py-2 text-right font-mono font-bold ${
+                            selectedClasse.type === 'actif' 
+                              ? 'text-blue-600' 
+                              : 'text-purple-600'
+                          }`}>
+                            {formatCurrency(account.solde || 0)}
+                          </td>
+                        </>
+                      )}
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot className="bg-gray-100 font-bold">
+                  <tr>
+                    <td colSpan="2" className="px-3 py-2 text-right">Total:</td>
+                    {isImmobilisation ? (
+                      <>
+                        <td className="px-3 py-2 text-right font-mono">
+                          {formatCurrency(totalBrut)}
+                        </td>
+                        <td className="px-3 py-2 text-right font-mono text-red-600">
+                          {formatCurrency(totalAmortissements)}
+                        </td>
+                        <td className={`px-3 py-2 text-right font-mono ${
+                          selectedClasse.type === 'actif' 
+                            ? 'text-blue-700' 
+                            : 'text-purple-700'
+                        }`}>
+                          {formatCurrency(totalNet)}
+                        </td>
+                        <td className="px-3 py-2 text-right font-mono text-gray-600">
+                          {totalBrut > 0 ? `${totalVetuste.toFixed(2)}%` : '-'}
+                        </td>
+                      </>
+                    ) : (
+                      <>
+                        <td className="px-3 py-2 text-right font-mono">
+                          {formatCurrency(totalDebit)}
+                        </td>
+                        <td className="px-3 py-2 text-right font-mono">
+                          {formatCurrency(totalCredit)}
+                        </td>
+                        <td className={`px-3 py-2 text-right font-mono ${
+                          selectedClasse.type === 'actif' 
+                            ? 'text-blue-700' 
+                            : 'text-purple-700'
+                        }`}>
+                          {formatCurrency(totalSolde)}
+                        </td>
+                      </>
+                    )}
+                  </tr>
+                  {selectedItem && (
+                    <tr className="bg-indigo-50">
+                      <td colSpan="2" className="px-3 py-2 text-right font-semibold text-indigo-800">
+                        {isImmobilisation ? 'Net du groupe (affiché dans le bilan):' : 'Solde du groupe (affiché dans le bilan):'}
+                      </td>
+                      {isImmobilisation ? (
+                        <>
+                          <td className="px-3 py-2"></td>
+                          <td className="px-3 py-2"></td>
+                          <td className={`px-3 py-2 text-right font-mono font-bold ${
+                            selectedClasse.type === 'actif' 
+                              ? 'text-blue-800' 
+                              : 'text-purple-800'
+                          }`}>
+                            {formatCurrency(selectedItem.net !== undefined ? selectedItem.net : (selectedItem.solde || 0))}
+                          </td>
+                          <td className="px-3 py-2"></td>
+                        </>
+                      ) : (
+                        <>
+                          <td className="px-3 py-2"></td>
+                          <td className="px-3 py-2"></td>
+                          <td className={`px-3 py-2 text-right font-mono font-bold ${
+                            selectedClasse.type === 'actif' 
+                              ? 'text-blue-800' 
+                              : 'text-purple-800'
+                          }`}>
+                            {formatCurrency(selectedItem.solde || 0)}
+                          </td>
+                        </>
+                      )}
+                    </tr>
+                  )}
+                </tfoot>
+              </table>
+            </div>
           </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm">
-              <thead className="bg-gray-200">
-                <tr>
-                  <th className="px-3 py-2 text-left font-semibold text-gray-700">Numéro de compte</th>
-                  <th className="px-3 py-2 text-left font-semibold text-gray-700">Libellé du compte</th>
-                  <th className="px-3 py-2 text-right font-semibold text-gray-700">Débit</th>
-                  <th className="px-3 py-2 text-right font-semibold text-gray-700">Crédit</th>
-                  <th className="px-3 py-2 text-right font-semibold text-gray-700">Solde</th>
-                </tr>
-              </thead>
-              <tbody>
-                {getBilanDetails(selectedClasse.type, selectedClasse.classe).map((account, idx) => (
-                  <tr key={idx} className="border-t border-gray-200 hover:bg-gray-100">
-                    <td className="px-3 py-2 font-mono text-xs">{account.compteNum}</td>
-                    <td className="px-3 py-2">{account.compteLibelle}</td>
+        );
+      })()}
+
+      {/* Fenêtre des comptes non affectés */}
+      {bilanN?.validation?.comptesNonAffectes && bilanN.validation.comptesNonAffectes.length > 0 && (
+        <div className="mt-6 p-6 bg-yellow-50 rounded-lg border-2 border-yellow-400 shadow-lg">
+          <div className="flex items-center justify-between mb-4">
+            <h4 className="text-lg font-bold text-yellow-800 flex items-center gap-2">
+              <BarChart3 size={20} />
+              Comptes non affectés ({bilanN.validation.comptesNonAffectes.length})
+            </h4>
+          </div>
+          <div className="bg-white rounded-lg border border-yellow-200 overflow-hidden">
+            <div className="overflow-x-auto max-h-96">
+              <table className="w-full text-sm">
+                <thead className="bg-yellow-100 sticky top-0">
+                  <tr>
+                    <th className="px-3 py-2 text-left font-semibold text-yellow-900">Numéro de compte</th>
+                    <th className="px-3 py-2 text-left font-semibold text-yellow-900">Libellé</th>
+                    <th className="px-3 py-2 text-right font-semibold text-yellow-900">Débit</th>
+                    <th className="px-3 py-2 text-right font-semibold text-yellow-900">Crédit</th>
+                    <th className="px-3 py-2 text-right font-semibold text-yellow-900">Solde</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {bilanN.validation.comptesNonAffectes.map((compte, idx) => (
+                    <tr key={idx} className="border-t border-yellow-200 hover:bg-yellow-50">
+                      <td className="px-3 py-2 font-mono text-xs">{compte.compteNum}</td>
+                      <td className="px-3 py-2">{compte.compteLibelle}</td>
+                      <td className="px-3 py-2 text-right font-mono">
+                        {compte.totalDebit > 0 ? formatCurrency(compte.totalDebit) : '-'}
+                      </td>
+                      <td className="px-3 py-2 text-right font-mono">
+                        {compte.totalCredit > 0 ? formatCurrency(compte.totalCredit) : '-'}
+                      </td>
+                      <td className={`px-3 py-2 text-right font-mono font-bold ${
+                        compte.solde > 0 ? 'text-blue-600' : compte.solde < 0 ? 'text-red-600' : 'text-gray-500'
+                      }`}>
+                        {formatCurrency(compte.solde)}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+                <tfoot className="bg-yellow-100 font-bold sticky bottom-0">
+                  <tr>
+                    <td colSpan="2" className="px-3 py-2 text-right">Total:</td>
                     <td className="px-3 py-2 text-right font-mono">
-                      {account.totalDebit > 0 ? formatCurrency(account.totalDebit) : '-'}
+                      {formatCurrency(
+                        bilanN.validation.comptesNonAffectes.reduce((sum, acc) => sum + (acc.totalDebit || 0), 0)
+                      )}
                     </td>
                     <td className="px-3 py-2 text-right font-mono">
-                      {account.totalCredit > 0 ? formatCurrency(account.totalCredit) : '-'}
+                      {formatCurrency(
+                        bilanN.validation.comptesNonAffectes.reduce((sum, acc) => sum + (acc.totalCredit || 0), 0)
+                      )}
                     </td>
-                    <td className={`px-3 py-2 text-right font-mono font-bold ${
-                      selectedClasse.type === 'actif' 
-                        ? 'text-blue-600' 
-                        : 'text-purple-600'
-                    }`}>
-                      {formatCurrency(account.solde)}
+                    <td className="px-3 py-2 text-right font-mono text-yellow-900">
+                      {formatCurrency(
+                        bilanN.validation.comptesNonAffectes.reduce((sum, acc) => sum + (acc.solde || 0), 0)
+                      )}
                     </td>
                   </tr>
-                ))}
-              </tbody>
-              <tfoot className="bg-gray-100 font-bold">
-                <tr>
-                  <td colSpan="2" className="px-3 py-2 text-right">Total:</td>
-                  <td className="px-3 py-2 text-right font-mono">
-                    {formatCurrency(
-                      getBilanDetails(selectedClasse.type, selectedClasse.classe).reduce((sum, acc) => sum + acc.totalDebit, 0)
-                    )}
-                  </td>
-                  <td className="px-3 py-2 text-right font-mono">
-                    {formatCurrency(
-                      getBilanDetails(selectedClasse.type, selectedClasse.classe).reduce((sum, acc) => sum + acc.totalCredit, 0)
-                    )}
-                  </td>
-                  <td className={`px-3 py-2 text-right font-mono ${
-                    selectedClasse.type === 'actif' 
-                      ? 'text-blue-700' 
-                      : 'text-purple-700'
-                  }`}>
-                    {formatCurrency(
-                      getBilanDetails(selectedClasse.type, selectedClasse.classe).reduce((sum, acc) => sum + acc.solde, 0)
-                    )}
-                  </td>
-                </tr>
-              </tfoot>
-            </table>
+                </tfoot>
+              </table>
+            </div>
+          </div>
+          <div className="mt-4 text-sm text-yellow-700">
+            <p className="font-semibold">Note :</p>
+            <p>Ces comptes sont des comptes de bilan (classe 1-5) qui n'ont pas été affectés à l'actif ou au passif. 
+            Cela peut être dû à un solde nul ou à un problème dans la logique d'affectation.</p>
           </div>
         </div>
       )}
@@ -441,4 +797,3 @@ const BilanView = ({
 };
 
 export default BilanView;
-

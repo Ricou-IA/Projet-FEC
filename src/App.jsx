@@ -1,10 +1,6 @@
-import React, { useState, useMemo, useEffect } from 'react';
-import { Upload, FileText, CheckCircle, XCircle, AlertCircle, BarChart3, TrendingUp, Download, Sparkles, Loader2, Search, Settings, Save } from 'lucide-react';
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import * as XLSX from 'xlsx';
+import React, { useState, useEffect } from 'react';
+import { XCircle } from 'lucide-react';
 import AgentPanel from './components/AgentPanel';
-import ProgrammeTravailTemplate from './components/ProgrammeTravailTemplate';
-import SeuilParamsModal from './components/SeuilParamsModal';
 import AppHeader from './components/AppHeader';
 import FileUploadZone from './components/FileUploadZone';
 import BalanceStats from './components/BalanceStats';
@@ -16,15 +12,10 @@ import CompteResultatView from './components/CompteResultatView';
 import BilanView from './components/BilanView';
 import ProgrammeView from './components/ProgrammeView';
 import { AIService } from './services/aiService';
-import { getAccountType, getBilanPosition, getResultatPosition, getAccountLabel, isRegularisationAccount, isTVAAccount } from './core/AccountClassifier';
 import { BilanGenerator } from './core/BilanGenerator';
-import { ResultatGenerator, generateCompteResultat as generateCompteResultatModule } from './core/ResultatGenerator.jsx';
+import { ResultatGenerator } from './core/ResultatGenerator.jsx';
 import { SIGGenerator } from './core/SIGGenerator';
-import CompteResultatDisplay from './components/CompteResultatDisplay';
-import reglesAffectation from './data/regles-affectation-comptes.json';
 import { analyzeFec } from './utils/fecCycleAnalyzer';
-import { brightenColor } from './utils/colors';
-import { parseFecFile } from './utils/fecParser';
 import { createSampleFECFile } from './utils/sampleFEC';
 import { exportBalanceComptable as exportBalanceComptableUtil } from './utils/balanceExporter';
 import { useEntrepriseSearch } from './hooks/useEntrepriseSearch';
@@ -178,6 +169,8 @@ const FecParserDemo = () => {
             ecritureDate: values[3],
             compteNum: values[4],
             compteLibelle: values[5],
+            compteAuxNum: values[6] || '', // Compte auxiliaire numéro (vide si pas d'auxiliaire)
+            compteAuxLibelle: values[7] || '', // Libellé du compte auxiliaire
             pieceRef: values[8],
             ecritureLibelle: values[10],
             debit: debit,
@@ -490,6 +483,7 @@ const FecParserDemo = () => {
             {analysisCategory === 'bilan' && (
               <BilanView
                 generateBilan={generateBilan}
+                parseResult1={parseResult1}
                 parseResult2={parseResult2}
                 showBilanN={showBilanN}
                 setShowBilanN={setShowBilanN}
