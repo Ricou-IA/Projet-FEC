@@ -29,8 +29,12 @@ export default defineConfig({
       transformMixedEsModules: true,
     },
     rollupOptions: {
+      external: ['xlsx'],
       output: {
         manualChunks: undefined,
+        globals: {
+          xlsx: 'XLSX',
+        },
       },
     },
   },

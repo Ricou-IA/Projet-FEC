@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { TrendingUp, Download, XCircle, ChevronRight, ChevronDown } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
-import * as XLSX from 'xlsx';
+// XLSX est chargé depuis le CDN (voir index.html)
+const XLSX = window.XLSX;
 import { formatCurrency } from '../utils/formatters';
 import { brightenColor } from '../utils/colors';
 import { useMonthlyData } from '../hooks/useMonthlyData';

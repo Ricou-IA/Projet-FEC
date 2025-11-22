@@ -1,4 +1,5 @@
-import * as XLSX from 'xlsx';
+// XLSX est chargé depuis le CDN (voir index.html)
+const XLSX = window.XLSX;
 
 export function exportBalanceComptable(parseResult1, parseResult2) {
   if (!parseResult1 || !parseResult1.data) {
