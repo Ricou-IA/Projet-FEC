@@ -16,6 +16,7 @@ export default defineConfig({
   },
   optimizeDeps: {
     entries: [path.resolve(__dirname, 'index.html')],
+    include: ['xlsx'],
   },
   resolve: {
     alias: {
@@ -23,16 +24,14 @@ export default defineConfig({
     },
   },
   build: {
+    commonjsOptions: {
+      include: [/xlsx/, /node_modules/],
+      transformMixedEsModules: true,
+    },
     rollupOptions: {
       output: {
         manualChunks: undefined,
       },
     },
-    commonjsOptions: {
-      include: [/xlsx/, /node_modules/],
-    },
-  },
-  optimizeDeps: {
-    include: ['xlsx'],
   },
 })
