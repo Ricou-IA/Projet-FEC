@@ -11,6 +11,7 @@ import CyclesView from './components/CyclesView';
 import CompteResultatView from './components/CompteResultatView';
 import BilanView from './components/BilanView';
 import ProgrammeView from './components/ProgrammeView';
+import ToastContainer from './components/ToastContainer';
 import { AIService } from './services/aiService';
 import BilanGenerator from './core/BilanGenerator';
 import { ResultatGenerator } from './core/ResultatGenerator.jsx';
@@ -21,6 +22,7 @@ import { exportBalanceComptable as exportBalanceComptableUtil } from './utils/ba
 import { useEntrepriseSearch } from './hooks/useEntrepriseSearch';
 import { useFECDataGenerators } from './hooks/useFECDataGenerators';
 import { useAccountDetails } from './hooks/useAccountDetails';
+import { useToast } from './hooks/useToast';
 
 const FecParserDemo = () => {
   // États pour gérer 2 fichiers FEC (Exercice N et Exercice N-1)
@@ -74,6 +76,9 @@ const FecParserDemo = () => {
     parseResult1,
     parseResult2
   );
+
+  // Hook pour les notifications
+  const { toasts, success, error: showError, removeToast } = useToast();
 
   // Fonction pour générer le programme de travail
   const handleGenerateProgramme = async () => {
@@ -224,15 +229,20 @@ const FecParserDemo = () => {
         }
 
         setLoading1(false);
+        success(`Fichier Exercice N chargé avec succès (${result.rowsCount.toLocaleString('fr-FR')} écritures)`);
       } catch (err) {
-        setError(`Erreur Exercice N: ${err.message}`);
+        const errorMsg = `Erreur Exercice N: ${err.message}`;
+        setError(errorMsg);
         setLoading1(false);
+        showError(errorMsg);
       }
     };
 
     reader.onerror = () => {
-      setError('Erreur lors de la lecture du fichier Exercice N');
+      const errorMsg = 'Erreur lors de la lecture du fichier Exercice N';
+      setError(errorMsg);
       setLoading1(false);
+      showError(errorMsg);
     };
 
     reader.readAsText(uploadedFile, 'UTF-8');
@@ -263,15 +273,20 @@ const FecParserDemo = () => {
         }
 
         setLoading2(false);
+        success(`Fichier Exercice N-1 chargé avec succès (${result.rowsCount.toLocaleString('fr-FR')} écritures)`);
       } catch (err) {
-        setError(`Erreur Exercice N-1: ${err.message}`);
+        const errorMsg = `Erreur Exercice N-1: ${err.message}`;
+        setError(errorMsg);
         setLoading2(false);
+        showError(errorMsg);
       }
     };
 
     reader.onerror = () => {
-      setError('Erreur lors de la lecture du fichier Exercice N-1');
+      const errorMsg = 'Erreur lors de la lecture du fichier Exercice N-1';
+      setError(errorMsg);
       setLoading2(false);
+      showError(errorMsg);
     };
 
     reader.readAsText(uploadedFile, 'UTF-8');
@@ -289,6 +304,7 @@ const FecParserDemo = () => {
     link.click();
     document.body.removeChild(link);
     URL.revokeObjectURL(url);
+    success('Fichier d\'exemple téléchargé avec succès');
   };
 
   // Générer automatiquement le programme de travail
@@ -377,45 +393,71 @@ const FecParserDemo = () => {
           onFileUpload1={handleFileUpload1}
           onFileUpload2={handleFileUpload2}
           onCreateSampleFile={handleCreateSampleFile}
+          loading1={loading1}
+          loading2={loading2}
         />
 
-        {/* Chargement */}
-        {(loading1 || loading2) && (
-          <div className="bg-white rounded-lg shadow-lg p-8 text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">
-              {loading1 && loading2 ? 'Traitement des fichiers FEC en cours...' : 
-               loading1 ? 'Traitement Exercice N en cours...' : 
-               'Traitement Exercice N-1 en cours...'}
-            </p>
+        {/* Chargement - Skeleton loader */}
+        {(loading1 || loading2) && !parseResult1 && (
+          <div className="bg-white rounded-lg shadow-lg p-8 animate-fade-in">
+            <div className="flex flex-col items-center justify-center">
+              <div className="relative">
+                <div className="animate-spin rounded-full h-16 w-16 border-4 border-indigo-100 border-t-indigo-600 mx-auto mb-4"></div>
+                <div className="absolute inset-0 rounded-full border-4 border-transparent border-t-purple-400 animate-spin" style={{ animationDuration: '1.5s' }}></div>
+              </div>
+              <p className="text-gray-600 font-medium animate-pulse">
+                {loading1 && loading2 ? 'Traitement des fichiers FEC en cours...' : 
+                 loading1 ? 'Traitement Exercice N en cours...' : 
+                 'Traitement Exercice N-1 en cours...'}
+              </p>
+              <div className="mt-4 w-full max-w-md">
+                <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+                  <div className="h-full bg-indigo-600 rounded-full animate-pulse" style={{ width: '60%' }}></div>
+                </div>
+              </div>
+            </div>
           </div>
         )}
 
         {/* Erreur */}
         {error && (
-          <div className="bg-red-50 border-l-4 border-red-500 p-6 rounded-lg shadow-lg">
+          <div className="bg-red-50 border-l-4 border-red-500 p-6 rounded-lg shadow-lg animate-slide-in-left">
             <div className="flex items-start gap-3">
-              <XCircle className="text-red-500 flex-shrink-0" size={24} />
-              <div>
+              <XCircle className="text-red-500 flex-shrink-0 animate-scale-in" size={24} />
+              <div className="flex-1">
                 <h3 className="text-lg font-semibold text-red-800 mb-1">
                   Erreur de traitement
                 </h3>
                 <p className="text-red-700">{error}</p>
               </div>
+              <button
+                onClick={() => setError(null)}
+                className="text-red-500 hover:text-red-700 transition-colors flex-shrink-0"
+                aria-label="Fermer"
+              >
+                <XCircle size={20} />
+              </button>
             </div>
           </div>
         )}
 
         {/* Résultats */}
         {parseResult1 && (
-          <div className="space-y-6">
+          <div className="space-y-6 animate-fade-in-up">
             {/* Statistiques principales */}
             <BalanceStats
               parseResult1={parseResult1}
               parseResult2={parseResult2}
               generateCompteResultat={generateCompteResultat}
               generateBilan={generateBilan}
-              onExportBalance={() => exportBalanceComptableUtil(parseResult1, parseResult2)}
+              onExportBalance={() => {
+                try {
+                  exportBalanceComptableUtil(parseResult1, parseResult2);
+                  success('Balance comptable exportée avec succès');
+                } catch (err) {
+                  showError(`Erreur lors de l'export : ${err.message}`);
+                }
+              }}
             />
 
             {/* Assistant IA */}
@@ -513,6 +555,9 @@ const FecParserDemo = () => {
             )}
           </div>
         )}
+
+        {/* Container pour les notifications */}
+        <ToastContainer toasts={toasts} onRemove={removeToast} />
       </div>
     </div>
   );

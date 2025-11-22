@@ -18,8 +18,11 @@ const BalanceStats = ({
   const [seuilRemonteeN, setSeuilRemonteeN] = useState('');
   const [ssgN1, setSsgN1] = useState('');
   const [seuilRemonteeN1, setSeuilRemonteeN1] = useState('');
-  const [isEditingN, setIsEditingN] = useState(false);
-  const [isEditingN1, setIsEditingN1] = useState(false);
+  // États d'édition séparés pour chaque champ
+  const [isEditingSsgN, setIsEditingSsgN] = useState(false);
+  const [isEditingSeuilN, setIsEditingSeuilN] = useState(false);
+  const [isEditingSsgN1, setIsEditingSsgN1] = useState(false);
+  const [isEditingSeuilN1, setIsEditingSeuilN1] = useState(false);
 
   // Calcul des indicateurs d'audit pour l'exercice N
   const indicateursAuditN = useMemo(() => {
@@ -120,50 +123,72 @@ const BalanceStats = ({
     return value.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ' ');
   };
 
-  // Fonction pour sauvegarder les valeurs manuelles (Exercice N)
-  const handleSaveN = () => {
+  // Fonction pour sauvegarder le SSG (Exercice N)
+  const handleSaveSsgN = () => {
     const ssgValue = parseMontant(ssgN);
-    const seuilValue = parseMontant(seuilRemonteeN);
-    
     if (ssgValue > 0) {
       setSsgN(ssgValue.toString());
     }
+    setIsEditingSsgN(false);
+  };
+
+  // Fonction pour sauvegarder le seuil de remontée (Exercice N)
+  const handleSaveSeuilN = () => {
+    const seuilValue = parseMontant(seuilRemonteeN);
     if (seuilValue > 0) {
       setSeuilRemonteeN(seuilValue.toString());
     }
-    setIsEditingN(false);
+    setIsEditingSeuilN(false);
   };
 
-  // Fonction pour sauvegarder les valeurs manuelles (Exercice N-1)
-  const handleSaveN1 = () => {
+  // Fonction pour sauvegarder le SSG (Exercice N-1)
+  const handleSaveSsgN1 = () => {
     const ssgValue = parseMontant(ssgN1);
-    const seuilValue = parseMontant(seuilRemonteeN1);
-    
     if (ssgValue > 0) {
       setSsgN1(ssgValue.toString());
     }
+    setIsEditingSsgN1(false);
+  };
+
+  // Fonction pour sauvegarder le seuil de remontée (Exercice N-1)
+  const handleSaveSeuilN1 = () => {
+    const seuilValue = parseMontant(seuilRemonteeN1);
     if (seuilValue > 0) {
       setSeuilRemonteeN1(seuilValue.toString());
     }
-    setIsEditingN1(false);
+    setIsEditingSeuilN1(false);
   };
 
-  // Fonction pour réinitialiser aux valeurs calculées (Exercice N)
-  const handleResetN = () => {
+  // Fonction pour réinitialiser le SSG (Exercice N)
+  const handleResetSsgN = () => {
     if (indicateursAuditN) {
       setSsgN(indicateursAuditN.ssg.toString());
-      setSeuilRemonteeN(indicateursAuditN.seuilRemontee.toString());
     }
-    setIsEditingN(false);
+    setIsEditingSsgN(false);
   };
 
-  // Fonction pour réinitialiser aux valeurs calculées (Exercice N-1)
-  const handleResetN1 = () => {
+  // Fonction pour réinitialiser le seuil de remontée (Exercice N)
+  const handleResetSeuilN = () => {
+    if (indicateursAuditN) {
+      setSeuilRemonteeN(indicateursAuditN.seuilRemontee.toString());
+    }
+    setIsEditingSeuilN(false);
+  };
+
+  // Fonction pour réinitialiser le SSG (Exercice N-1)
+  const handleResetSsgN1 = () => {
     if (indicateursAuditN1) {
       setSsgN1(indicateursAuditN1.ssg.toString());
+    }
+    setIsEditingSsgN1(false);
+  };
+
+  // Fonction pour réinitialiser le seuil de remontée (Exercice N-1)
+  const handleResetSeuilN1 = () => {
+    if (indicateursAuditN1) {
       setSeuilRemonteeN1(indicateursAuditN1.seuilRemontee.toString());
     }
-    setIsEditingN1(false);
+    setIsEditingSeuilN1(false);
   };
 
   // Valeurs finales à afficher (manuelles si saisies, sinon calculées)
@@ -173,10 +198,10 @@ const BalanceStats = ({
   const seuilRemonteeFinalN1 = seuilRemonteeN1 ? parseMontant(seuilRemonteeN1) : (indicateursAuditN1?.seuilRemontee || 0);
 
   return (
-    <div className="bg-white rounded-lg shadow-lg p-6">
+    <div className="bg-white rounded-lg shadow-lg p-6 animate-fade-in-up">
       <div className="flex items-center gap-2 mb-4">
-        <CheckCircle className="text-green-500" size={24} />
-        <h2 className="text-xl font-semibold text-gray-800">
+        <CheckCircle className="text-green-500 animate-scale-in" size={24} />
+        <h2 className="text-xl font-semibold text-gray-800 animate-fade-in-up" style={{ animationDelay: '0.1s' }}>
           Traitement réussi !
         </h2>
       </div>
@@ -193,7 +218,7 @@ const BalanceStats = ({
             </div>
             <button
               onClick={onExportBalance}
-              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-colors flex items-center gap-2 text-sm font-medium"
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all duration-200 flex items-center gap-2 text-sm font-medium hover:scale-105 active:scale-95 shadow-md hover:shadow-lg"
               title="Exporter la balance comptable au format Excel"
             >
               <Download size={16} />
@@ -344,9 +369,16 @@ const BalanceStats = ({
                       <p className="text-sm text-purple-600 font-medium">
                         Seuil de Signification (SSG)
                       </p>
-                      {!isEditingN ? (
+                      {!isEditingSsgN ? (
                         <button
-                          onClick={() => setIsEditingN(true)}
+                          onClick={() => {
+                            // Désactiver tous les autres champs
+                            setIsEditingSeuilN(false);
+                            setIsEditingSsgN1(false);
+                            setIsEditingSeuilN1(false);
+                            // Activer uniquement ce champ
+                            setIsEditingSsgN(true);
+                          }}
                           className="text-purple-600 hover:text-purple-800 transition-colors"
                           title="Modifier manuellement"
                         >
@@ -355,14 +387,14 @@ const BalanceStats = ({
                       ) : (
                         <div className="flex gap-1">
                           <button
-                            onClick={handleSaveN}
+                            onClick={handleSaveSsgN}
                             className="text-green-600 hover:text-green-800 transition-colors"
                             title="Enregistrer"
                           >
                             <Save size={16} />
                           </button>
                           <button
-                            onClick={handleResetN}
+                            onClick={handleResetSsgN}
                             className="text-red-600 hover:text-red-800 transition-colors"
                             title="Réinitialiser"
                           >
@@ -371,7 +403,7 @@ const BalanceStats = ({
                         </div>
                       )}
                     </div>
-                    {isEditingN ? (
+                    {isEditingSsgN ? (
                       <div className="space-y-2">
                         <input
                           type="text"
@@ -399,9 +431,16 @@ const BalanceStats = ({
                       <p className="text-sm text-indigo-600 font-medium">
                         Seuil de remontée des anomalies
                       </p>
-                      {!isEditingN ? (
+                      {!isEditingSeuilN ? (
                         <button
-                          onClick={() => setIsEditingN(true)}
+                          onClick={() => {
+                            // Désactiver tous les autres champs
+                            setIsEditingSsgN(false);
+                            setIsEditingSsgN1(false);
+                            setIsEditingSeuilN1(false);
+                            // Activer uniquement ce champ
+                            setIsEditingSeuilN(true);
+                          }}
                           className="text-indigo-600 hover:text-indigo-800 transition-colors"
                           title="Modifier manuellement"
                         >
@@ -410,14 +449,14 @@ const BalanceStats = ({
                       ) : (
                         <div className="flex gap-1">
                           <button
-                            onClick={handleSaveN}
+                            onClick={handleSaveSeuilN}
                             className="text-green-600 hover:text-green-800 transition-colors"
                             title="Enregistrer"
                           >
                             <Save size={16} />
                           </button>
                           <button
-                            onClick={handleResetN}
+                            onClick={handleResetSeuilN}
                             className="text-red-600 hover:text-red-800 transition-colors"
                             title="Réinitialiser"
                           >
@@ -426,7 +465,7 @@ const BalanceStats = ({
                         </div>
                       )}
                     </div>
-                    {isEditingN ? (
+                    {isEditingSeuilN ? (
                       <div className="space-y-2">
                         <input
                           type="text"
@@ -471,9 +510,16 @@ const BalanceStats = ({
                         <p className="text-sm text-purple-600 font-medium">
                           Seuil de Signification (SSG)
                         </p>
-                        {!isEditingN1 ? (
+                        {!isEditingSsgN1 ? (
                           <button
-                            onClick={() => setIsEditingN1(true)}
+                            onClick={() => {
+                              // Désactiver tous les autres champs
+                              setIsEditingSsgN(false);
+                              setIsEditingSeuilN(false);
+                              setIsEditingSeuilN1(false);
+                              // Activer uniquement ce champ
+                              setIsEditingSsgN1(true);
+                            }}
                             className="text-purple-600 hover:text-purple-800 transition-colors"
                             title="Modifier manuellement"
                           >
@@ -482,14 +528,14 @@ const BalanceStats = ({
                         ) : (
                           <div className="flex gap-1">
                             <button
-                              onClick={handleSaveN1}
+                              onClick={handleSaveSsgN1}
                               className="text-green-600 hover:text-green-800 transition-colors"
                               title="Enregistrer"
                             >
                               <Save size={16} />
                             </button>
                             <button
-                              onClick={handleResetN1}
+                              onClick={handleResetSsgN1}
                               className="text-red-600 hover:text-red-800 transition-colors"
                               title="Réinitialiser"
                             >
@@ -498,7 +544,7 @@ const BalanceStats = ({
                           </div>
                         )}
                       </div>
-                      {isEditingN1 ? (
+                      {isEditingSsgN1 ? (
                         <div className="space-y-2">
                           <input
                             type="text"
@@ -526,9 +572,16 @@ const BalanceStats = ({
                         <p className="text-sm text-indigo-600 font-medium">
                           Seuil de remontée des anomalies
                         </p>
-                        {!isEditingN1 ? (
+                        {!isEditingSeuilN1 ? (
                           <button
-                            onClick={() => setIsEditingN1(true)}
+                            onClick={() => {
+                              // Désactiver tous les autres champs
+                              setIsEditingSsgN(false);
+                              setIsEditingSeuilN(false);
+                              setIsEditingSsgN1(false);
+                              // Activer uniquement ce champ
+                              setIsEditingSeuilN1(true);
+                            }}
                             className="text-indigo-600 hover:text-indigo-800 transition-colors"
                             title="Modifier manuellement"
                           >
@@ -537,14 +590,14 @@ const BalanceStats = ({
                         ) : (
                           <div className="flex gap-1">
                             <button
-                              onClick={handleSaveN1}
+                              onClick={handleSaveSeuilN1}
                               className="text-green-600 hover:text-green-800 transition-colors"
                               title="Enregistrer"
                             >
                               <Save size={16} />
                             </button>
                             <button
-                              onClick={handleResetN1}
+                              onClick={handleResetSeuilN1}
                               className="text-red-600 hover:text-red-800 transition-colors"
                               title="Réinitialiser"
                             >
@@ -553,7 +606,7 @@ const BalanceStats = ({
                           </div>
                         )}
                       </div>
-                      {isEditingN1 ? (
+                      {isEditingSeuilN1 ? (
                         <div className="space-y-2">
                           <input
                             type="text"

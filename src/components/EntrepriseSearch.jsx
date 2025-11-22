@@ -38,7 +38,7 @@ const EntrepriseSearch = ({
         <button
           onClick={onSearch}
           disabled={loadingEntreprise || siren.length !== 9}
-          className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg transition-colors flex items-center gap-2"
+          className="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-gray-300 disabled:cursor-not-allowed text-white rounded-lg transition-all duration-200 flex items-center gap-2 hover:scale-105 active:scale-95 disabled:hover:scale-100 shadow-md hover:shadow-lg disabled:shadow-none"
         >
           {loadingEntreprise ? (
             <>
@@ -56,7 +56,7 @@ const EntrepriseSearch = ({
 
       {/* Affichage des informations de l'entreprise */}
       {entrepriseInfo && (
-        <div className="mt-4 p-4 bg-indigo-50 rounded-lg border border-indigo-200">
+        <div className="mt-4 p-4 bg-indigo-50 rounded-lg border border-indigo-200 animate-fade-in-up">
           <div className="flex items-start justify-between mb-3">
             <div className="flex-1">
               <h3 className="font-bold text-indigo-900 mb-2">{entrepriseInfo.nom}</h3>
