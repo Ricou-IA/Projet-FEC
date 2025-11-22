@@ -29,7 +29,10 @@ export default defineConfig({
       transformMixedEsModules: true,
     },
     rollupOptions: {
-      external: ['xlsx'],
+      external: (id) => {
+        // Externaliser xlsx et tous ses sous-modules
+        return id === 'xlsx' || id.startsWith('xlsx/');
+      },
       output: {
         manualChunks: undefined,
         globals: {
