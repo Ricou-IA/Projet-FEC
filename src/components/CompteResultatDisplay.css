@@ -1,0 +1,419 @@
+.compte-resultat-container {
+  width: 100%;
+  background: white;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.compte-resultat-empty {
+  text-align: center;
+  padding: 40px;
+  color: #999;
+  font-style: italic;
+}
+
+.compte-resultat-section {
+  margin-bottom: 30px;
+}
+
+.section-title {
+  background: #e8f4f8;
+  padding: 12px 16px;
+  font-weight: bold;
+  font-size: 1.1em;
+  border-left: 4px solid #2196F3;
+  margin-bottom: 8px;
+  border-radius: 4px 0 0 4px;
+}
+
+.section-title.charges-title {
+  background: #ffebee;
+  border-left-color: #f44336;
+}
+
+.section-title.produits-title {
+  background: #e8f5e9;
+  border-left-color: #4CAF50;
+}
+
+.compte-resultat-table {
+  width: 100%;
+}
+
+.compte-resultat-row {
+  display: flex;
+  align-items: center;
+  padding: 10px 16px;
+  border-bottom: 1px solid #e0e0e0;
+  transition: background-color 0.2s;
+}
+
+.compte-resultat-row:hover {
+  background-color: #f5f5f5;
+}
+
+.compte-resultat-row.ligne {
+  /* Style par défaut pour les lignes */
+}
+
+.compte-code {
+  width: 80px;
+  color: #666;
+  font-family: 'Courier New', monospace;
+  font-size: 0.9em;
+  font-weight: 500;
+}
+
+.compte-libelle {
+  flex: 1;
+  padding-left: 12px;
+  color: #333;
+}
+
+.compte-montant {
+  width: 150px;
+  text-align: right;
+  font-family: 'Courier New', monospace;
+  font-weight: 500;
+  color: #333;
+}
+
+.total-row {
+  background: #f5f5f5;
+  font-weight: bold;
+  border-top: 2px solid #333;
+  border-bottom: 2px solid #333;
+  margin-top: 8px;
+  padding: 12px 16px;
+}
+
+.total-row .compte-montant {
+  font-weight: 700;
+  font-size: 1.05em;
+}
+
+.resultat-line {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: #e3f2fd;
+  font-size: 1.2em;
+  font-weight: bold;
+  margin: 20px 0;
+  border-radius: 4px;
+  border-left: 4px solid #2196F3;
+}
+
+.resultat-line.resultat-net {
+  background: #fff3e0;
+  border-left-color: #ff9800;
+  font-size: 1.3em;
+  margin-top: 30px;
+}
+
+.benefice {
+  color: #4CAF50;
+}
+
+.perte {
+  color: #f44336;
+}
+
+/* Styles pour l'affichage hiérarchique */
+.compte-resultat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.colonne-charges,
+.colonne-produits {
+  display: flex;
+  flex-direction: column;
+}
+
+.colonne-title {
+  font-size: 1.5em;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  padding: 12px 16px;
+  border-radius: 4px;
+}
+
+.colonne-title.charges-title {
+  background: #ffebee;
+  color: #c62828;
+  border-left: 4px solid #f44336;
+}
+
+.colonne-title.produits-title {
+  background: #e8f5e9;
+  color: #2e7d32;
+  border-left: 4px solid #4CAF50;
+}
+
+.compte-parent {
+  font-weight: 500;
+}
+
+.compte-parent.clickable-parent {
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.compte-parent.clickable-parent:hover {
+  background-color: #e3f2fd !important;
+}
+
+.compte-parent.selected-parent {
+  background-color: #bbdefb !important;
+  border-left: 3px solid #2196F3;
+  padding-left: 13px !important;
+}
+
+.compte-enfant {
+  font-size: 0.9em;
+  color: #666;
+  font-style: italic;
+}
+
+.resultats-intermediaires {
+  grid-column: 1 / -1;
+  margin-top: 2rem;
+  padding: 1rem;
+  background: #f9f9f9;
+  border: 2px solid #333;
+  border-radius: 4px;
+}
+
+.resultats-intermediaires .resultat {
+  display: flex;
+  justify-content: space-between;
+  padding: 0.5rem;
+  border-bottom: 1px solid #ddd;
+}
+
+.resultats-intermediaires .resultat-net {
+  display: flex;
+  justify-content: space-between;
+  padding: 1rem;
+  margin-top: 1rem;
+  background: #fff;
+  border: 2px solid #333;
+  border-radius: 4px;
+  font-size: 1.2em;
+  font-weight: bold;
+}
+
+.resultats-intermediaires .positif {
+  color: #059669;
+}
+
+.resultats-intermediaires .negatif {
+  color: #dc2626;
+}
+
+/* Styles pour la section de détails des comptes enfants */
+.children-details-section {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: #f5f5f5;
+  border: 2px solid #2196F3;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.children-details-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 2px solid #2196F3;
+}
+
+.children-details-header h3 {
+  margin: 0;
+  font-size: 1.3em;
+  color: #1976D2;
+}
+
+.close-details-btn {
+  background: #f44336;
+  color: white;
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  font-size: 1.2em;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.2s;
+}
+
+.close-details-btn:hover {
+  background: #d32f2f;
+}
+
+.children-details-parent {
+  display: grid;
+  grid-template-columns: 100px 1fr 150px 200px;
+  gap: 1rem;
+  padding: 1rem;
+  margin-bottom: 1rem;
+  background: #e3f2fd;
+  border-left: 4px solid #2196F3;
+  border-radius: 4px;
+  font-weight: 500;
+}
+
+.parent-code {
+  font-family: 'Courier New', monospace;
+  font-weight: bold;
+  color: #1976D2;
+}
+
+.parent-libelle {
+  color: #333;
+}
+
+.parent-montant {
+  font-family: 'Courier New', monospace;
+  text-align: right;
+  font-weight: bold;
+  color: #333;
+}
+
+.parent-section {
+  font-size: 0.9em;
+  color: #666;
+  font-style: italic;
+}
+
+.children-details-table {
+  width: 100%;
+  background: white;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.children-details-row {
+  display: grid;
+  grid-template-columns: 100px 1fr 120px 120px 150px;
+  gap: 1rem;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid #e0e0e0;
+  align-items: center;
+}
+
+.children-details-row.header-row {
+  background: #2196F3;
+  color: white;
+  font-weight: bold;
+  border-bottom: 2px solid #1976D2;
+}
+
+.children-details-row:not(.header-row):hover {
+  background-color: #f5f5f5;
+}
+
+.children-details-row.total-row {
+  background: #f5f5f5;
+  font-weight: bold;
+  border-top: 2px solid #333;
+  border-bottom: 2px solid #333;
+  margin-top: 0.5rem;
+}
+
+.child-code {
+  font-family: 'Courier New', monospace;
+  font-size: 0.9em;
+  color: #666;
+}
+
+.child-libelle {
+  color: #333;
+}
+
+.child-debit,
+.child-credit,
+.child-montant {
+  font-family: 'Courier New', monospace;
+  text-align: right;
+  font-size: 0.9em;
+}
+
+.child-montant {
+  font-weight: 500;
+}
+
+.child-montant.negative {
+  color: #f44336;
+}
+
+.header-row .child-code,
+.header-row .child-libelle,
+.header-row .child-debit,
+.header-row .child-credit,
+.header-row .child-montant {
+  color: white;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .compte-resultat-grid {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .resultats-intermediaires {
+    grid-column: 1;
+  }
+
+  .compte-resultat-row {
+    flex-wrap: wrap;
+  }
+
+  .compte-code {
+    width: 100%;
+    margin-bottom: 4px;
+  }
+
+  .compte-montant {
+    width: 100%;
+    text-align: left;
+    padding-left: 12px;
+    margin-top: 4px;
+  }
+
+  .resultat-line {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .children-details-parent {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .children-details-row {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .child-code,
+  .child-libelle,
+  .child-debit,
+  .child-credit,
+  .child-montant {
+    width: 100%;
+    text-align: left;
+  }
+}
+
